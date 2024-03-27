@@ -1,0 +1,8 @@
+browser_cookie3
+cachetools
+pypresence
+requests
+pywin32
+spotipy
+psutil
+httpx

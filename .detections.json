@@ -1,0 +1,92 @@
+{
+    "example.exe":{
+        "state":"Текст",
+        "details":"Текст",
+        "start":"current_timestamp",
+        "buttons":[
+            {
+                "label":"Текст",
+                "url":"Ссылка"
+            }
+        ],
+        "large_image":"ссылка",
+        "large_text":"текст для ссылки",
+        "small_image":"ссылка",
+        "small_text":"текст для ссылки"
+    },
+    
+    "cyberpunk2077.exe":{
+        "state":"Киберпенис 😈",
+        "start":"current_timestamp",
+        "large_image":"https://steamuserimages-a.akamaihd.net/ugc/919179300263723905/C549916E5AA22FE5C67D98DC68547984A2B8E2CA/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
+        "large_text":"Cybepunk 2077"
+    },
+    
+    "escapefromtarkov.exe":{
+        "state":"Лучший вайп",
+        "details":"Смертей: 1059",
+        "start":"current_timestamp",
+        "buttons":[
+            {
+                "label":"Купить",
+                "url":"https://www.escapefromtarkov.com/preorder-page"
+            }
+        ],
+        "large_image":"https://cdn.discordapp.com/app-icons/1191411733592551444/a39a2bfe0fb42f24983942eef18ef92f.png?size=256",
+        "large_text":"Игра года"
+    },
+   
+    "shootergame.exe":{
+        "details":"Вербую пидронов",
+        "start":"current_timestamp",
+        "large_image":"https://i.pinimg.com/736x/00/fd/8a/00fd8af896bab591d677f03939f07e7c.jpg",
+        "large_text":"Дом пидронов"
+    },
+    
+    "dyinglightgame_x64_rwdi.exe":{
+        "details":"Выживаю среди зомбаков",
+        "start":"current_timestamp",
+        "large_image":"https://image.api.playstation.com/vulcan/img/rnd/202106/2908/7aJhOMuJALdBPqZHVy3CgJsg.png",
+        "large_text":"Зомби апокалипсис"
+    },
+    
+    "sublime_text.exe":{
+        "state":"Работаю над {filename}",
+        "start":"current_timestamp",
+        "large_image":"https://raw.githubusercontent.com/Snazzah/SublimeDiscordRP/master/icons/lang-python.png"
+    },
+    
+    "spotify.exe":{
+        "state":"{track_name}",
+        "details":"{track_artist}",
+        "buttons":[
+            {
+                "label":"Послушать ебейший трек",
+                "url":"{track_url}"
+            },
+            {
+                "label":"Telegram",
+                "url":"https://plowside.t.me"
+            }
+        ],
+        "large_image":"{album_picture}",
+        "large_text":"Shpotify"
+    },
+    
+    "chrome.exe":{
+        "state":"{tab_name}",
+        "start":"current_timestamp",
+        "large_image":"https://www.freepnglogos.com/uploads/google-chrome-png-logo/google-chrome-icon-png-logo-1.png",
+        "large_text":"Google Chrome"
+    },
+    
+    "idle":{
+        "state":"Отдыхаю",
+        "buttons":[
+            {
+                "label":"Telegram",
+                "url":"https://plowside.t.me"
+            }
+        ]
+    }
+}
