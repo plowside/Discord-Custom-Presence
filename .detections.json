@@ -1,7 +1,7 @@
 {
     "example.exe":{
-        "state":"Текст",
-        "details":"Текст",
+        "details":"Верхний Текст",
+        "state":"Нижний текст",
         "start":"current_timestamp",
         "buttons":[
             {
@@ -14,7 +14,13 @@
         "small_image":"ссылка",
         "small_text":"текст для ссылки"
     },
-    
+
+    "discord.exe":{
+        "state":"сучка",
+        "large_image": "https://i.imgur.com/4PUv9n6.gif",
+        "large_text": "инопришленец"
+    },
+
     "cyberpunk2077.exe":{
         "state":"Киберпенис 😈",
         "start":"current_timestamp",

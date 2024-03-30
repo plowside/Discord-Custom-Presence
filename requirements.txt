@@ -1,4 +1,4 @@
-browser_cookie3
+browser-cookie3
 cachetools
 pypresence
 requests

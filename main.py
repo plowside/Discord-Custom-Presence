@@ -1,3 +1,5 @@
+##!C:/Users/plows/OneDrive/Documents/GitHub/Discord-Custom-Presence/venv/Scripts/python.exe
+
 import browser_cookie3, win32process, pypresence, threading, traceback, win32gui, win32con, requests, asyncio, spotipy, logging, hashlib, psutil, httpx, json, base64, time, sys, os, re
 from urllib.parse import parse_qsl, urlparse
 from spotipy.oauth2 import SpotifyOAuth
@@ -23,6 +25,7 @@ sys.excepthook = crash_handler
 class custom_presence: # client
 	def __init__(self):
 		self.rpc = None
+		self.rpc_connected = False
 		self.rpc_id = None
 		self.is_idle = True
 		self.pid = None
@@ -30,7 +33,7 @@ class custom_presence: # client
 		self.check_data = {}
 		self.detections = {}
 
-	def create_rpc(self, bot_id = 1204039320969682954):
+	def create_rpc(self, bot_id = discord_bot_id):
 		if self.rpc:
 			logging.debug('[custom_presence] Closing RPC')
 			try:
@@ -38,6 +41,7 @@ class custom_presence: # client
 				logging.debug('[custom_presence] RPC closed')
 			except pypresence.exceptions.PipeClosed: pass
 			except Exception as e: logging.error(f'[custom_presence] Error on closing RPC: {e}')
+			self.rpc_connected = False
 		
 		self.rpc = pypresence.Presence(bot_id)
 		logging.debug('[custom_presence] Connecting to RPC')
@@ -47,18 +51,20 @@ class custom_presence: # client
 		self.rpc_id = bot_id
 
 	def rpc_connect(self):
+		if self.rpc_connected: return
 		try:
 			self.rpc.connect()
+			self.rpc_connected = True
 		except pypresence.exceptions.DiscordNotFound: self.await_discord()
 		except Exception as error: logging.error(f'[custom_presence] Error on connecting RPC: {error}')
-		finally: self.rpc.connect()
+		finally: self.rpc_connect()
 
 	def update_rpc(self, is_idle = False, **kwargs):
 		self.is_idle = is_idle
 
 		try: self.rpc.update(**kwargs)
 		except pypresence.exceptions.DiscordNotFound: self.await_discord()
-		except pypresence.exceptions.PipeClosed: self.create_rpc(1203746078911103066)
+		except pypresence.exceptions.PipeClosed: self.create_rpc(discord_bot_id)
 		except Exception as error: return logging.error(f'[custom_presence] Error on updating RPC: {error}')
 		finally: self.rpc.update(**kwargs)
 
@@ -247,7 +253,7 @@ def replace_values(data, replacements):
 client = custom_presence()
 spf_client = spotify_client(spotify_client_id, spotify_client_secret, spotify_client_redirect_uri, proxies)
 
-client.create_rpc(1203746078911103066)
+client.create_rpc(discord_bot_id)
 #####################################################################
 repeats = 11
 while True:
@@ -322,7 +328,7 @@ while True:
 			activity_data = client.detections['idle']
 		
 		if len(activity_data) > 0: client.update_rpc(client.is_idle, **activity_data)
-	except pypresence.exceptions.PipeClosed: client.create_rpc(1203746078911103066)
+	except pypresence.exceptions.PipeClosed: client.create_rpc(discord_bot_id)
 	except Exception as error: logging.error(f'Error on procces watcher: {error}\n{traceback.format_exc()}')
 	time.sleep(2)
 	repeats += 1
