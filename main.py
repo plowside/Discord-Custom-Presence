@@ -56,7 +56,10 @@ class custom_presence: # client
 			self.rpc.connect()
 			self.rpc_connected = True
 		except pypresence.exceptions.DiscordNotFound: self.await_discord()
-		except Exception as error: logging.error(f'[custom_presence] Error on connecting RPC: {error}')
+		except Exception as error:
+			logging.error(f'[custom_presence] Error on connecting RPC: {error}')
+			if 'Message: User logged out' in str(error):
+				return self.create_rpc()
 		finally: self.rpc_connect()
 
 	def update_rpc(self, is_idle = False, **kwargs):
