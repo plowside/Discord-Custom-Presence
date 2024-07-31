@@ -80,8 +80,12 @@ class custom_presence: # client
 	def await_discord(self):
 		logging.debug('[custom_presence] No running copies of the discord were found')
 		pattern = re.compile(r'.*discord.*\.exe$')
-		while not pattern.match(', '.join([x.name().lower() for x in psutil.process_iter()])):
-			time.sleep(1)
+		while True:
+			try:
+				while not pattern.match(', '.join([x.name().lower() for x in psutil.process_iter()])):
+					time.sleep(1)
+				break
+			except: ...
 		logging.debug('[custom_presence] A copy of the running discord was found')
 		time.sleep(10)
 
@@ -102,6 +106,7 @@ class spotify_client: # spf_client
 		self.auth()
 
 	def auth(self):
+		self.change_proxy()
 		try:
 			if os.path.exists('.cache'):
 				bearer = json.loads(open('.cache','r').read()).get('access_token')
@@ -114,11 +119,16 @@ class spotify_client: # spf_client
 					return logging.info('[spf_client] Connected to session')
 
 			logging.info('[spf_client] Creating session')
-			cookies = {cookie.name: cookie.value for cookie in browser_cookie3.load(domain_name="spotify.com")}
-			url = self.session.get(f'https://accounts.spotify.com/authorize?client_id={self.spotify_client_id}&response_type=code&redirect_uri={self.spotify_client_redirect_uri}&scope=user-read-playback-state', cookies=cookies, headers={'authority': 'accounts.spotify.com','accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7','accept-language': 'ru,en-US;q=0.9,en;q=0.8,ru-RU;q=0.7','sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"','sec-ch-ua-mobile': '?0','sec-ch-ua-platform': '"Windows"','sec-fetch-dest': 'document','sec-fetch-mode': 'navigate','sec-fetch-site': 'none','sec-fetch-user': '?1','upgrade-insecure-requests': '1','user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'}).url
+			cookies = {cookie.name: cookie.value for cookie in browser_cookie3.chrome(domain_name="spotify.com")}
+			req = self.session.get(f'https://accounts.spotify.com/authorize?client_id={self.spotify_client_id}&response_type=code&redirect_uri={self.spotify_client_redirect_uri}&scope=user-read-playback-state', cookies=cookies, headers={'authority': 'accounts.spotify.com','accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7','accept-language': 'ru,en-US;q=0.9,en;q=0.8,ru-RU;q=0.7','sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"','sec-ch-ua-mobile': '?0','sec-ch-ua-platform': '"Windows"','sec-fetch-dest': 'document','sec-fetch-mode': 'navigate','sec-fetch-site': 'none','sec-fetch-user': '?1','upgrade-insecure-requests': '1','user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'})
+			if 'smallImageUrl":"' in req.text:
+				csrf = req.headers['set-cookie'].split('csrf_token=')[1].split(';')[0]
+				req = self.session.post(f'https://accounts.spotify.com/ru/authorize/accept?ajax_redirect=1', data={'request': '', 'client_id': self.spotify_client_id, 'response_type': 'code', 'redirect_uri': self.spotify_client_redirect_uri, 'scope': 'user-read-playback-state', 'csrf_token': csrf}, cookies=cookies, headers={'authority': 'accounts.spotify.com','accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7','accept-language': 'ru,en-US;q=0.9,en;q=0.8,ru-RU;q=0.7','sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"','sec-ch-ua-mobile': '?0','sec-ch-ua-platform': '"Windows"','sec-fetch-dest': 'document','sec-fetch-mode': 'navigate','sec-fetch-site': 'none','sec-fetch-user': '?1','upgrade-insecure-requests': '1','user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'})
+			url = req.url
+
 			code = [dict(parse_qsl(urlparse(url).query)).get(param) for param in ["state", "code"]][1]
 			if not code: return logging.warning('[spf_client] Invalid credentials, using manually mode for Spotify')
-			
+
 			token = self.session.post('https://accounts.spotify.com/api/token', headers={"Authorization": f"Basic {base64.b64encode(f'{self.spotify_client_id}:{self.spotify_client_secret}'.encode('ascii')).decode('ascii')}"}, data={'redirect_uri': self.spotify_client_redirect_uri,'code':code, 'grant_type': 'authorization_code'}).json()
 			token["expires_at"] = int(time.time()) + token["expires_in"]
 			open('.cache', 'w').write(json.dumps(token))
