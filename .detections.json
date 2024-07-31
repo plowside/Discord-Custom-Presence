@@ -15,10 +15,40 @@
         "small_text":"текст для ссылки"
     },
 
-    "discord.exe":{
-        "state":"сучка",
-        "large_image": "https://i.imgur.com/4PUv9n6.gif",
-        "large_text": "инопришленец"
+    "eurotrucks2.exe":{
+        "details": "Дальнобойщик Антошка",
+        "start": "current_timestamp",
+        "large_image":"https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Euro_Truck_Simulator_2_cover.jpg/220px-Euro_Truck_Simulator_2_cover.jpg",
+        "large_text":"Euro Truck Simulator 2"
+    },
+
+    "javaw.exe":{
+        "details": "Ванильный 1.21",
+        "state":"plowside.aternos.me:19465",
+        "start": "current_timestamp",
+        "large_image":"https://cdn.sortiraparis.com/images/80/66131/870109-minecraft-legends-date-de-sortie-gameplay-le-point-sur-le-jeu-d-action-strategie-de-mojang.jpg",
+        "large_text":"Minecraft"
+    },
+
+    "pendriverpro-win64-shipping.exe":{
+        "state":"Малыш на пенисе",
+        "start": "current_timestamp",
+        "large_image":"https://images.stopgame.ru/games/logos/22551/pacific_drive-square.jpg",
+        "large_text":"Pacific Drive"
+    },
+
+    "deadbydaylight-win64-shipping.exe":{
+        "state":"Подвергаюсь насилию",
+        "start": "current_timestamp",
+        "large_image":"https://media1.tenor.com/m/us4kCmzGTeEAAAAd/dbd-dead-by-daylight.gif",
+        "large_text":"Dead By Daylight"
+    },
+
+    "content warning.exe":{
+        "state":"Бабка с пенисом",
+        "start":"current_timestamp",
+        "large_image":"https://steamuserimages-a.akamaihd.net/ugc/919179300263723905/C549916E5AA22FE5C67D98DC68547984A2B8E2CA/?imw=512&&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false",
+        "large_text":"Cybepunk 2077"
     },
 
     "cyberpunk2077.exe":{
@@ -52,14 +82,15 @@
     "dyinglightgame_x64_rwdi.exe":{
         "details":"Выживаю среди зомбаков",
         "start":"current_timestamp",
-        "large_image":"https://image.api.playstation.com/vulcan/img/rnd/202106/2908/7aJhOMuJALdBPqZHVy3CgJsg.png",
-        "large_text":"Зомби апокалипсис"
+        "large_image":"https://media1.tenor.com/m/aoK09DFNzHUAAAAC/dying-light2-hunting.gif",
+        "large_text":"Dying Light 2"
     },
     
     "sublime_text.exe":{
         "state":"Работаю над {filename}",
         "start":"current_timestamp",
-        "large_image":"https://raw.githubusercontent.com/Snazzah/SublimeDiscordRP/master/icons/lang-python.png"
+        "large_image":"https://raw.githubusercontent.com/Snazzah/SublimeDiscordRP/master/icons/lang-python.png",
+        "large_text":"Sublime Text"
     },
     
     "spotify.exe":{
@@ -85,13 +116,19 @@
         "large_image":"https://www.freepnglogos.com/uploads/google-chrome-png-logo/google-chrome-icon-png-logo-1.png",
         "large_text":"Google Chrome"
     },
+
+    "discord.exe":{
+        "state":"сучка",
+        "large_image": "https://i.imgur.com/9R03Z3w.gif",
+        "large_text": "инопришленец"
+    },
     
     "idle":{
         "state":"Отдыхаю",
         "buttons":[
             {
                 "label":"Telegram",
-                "url":"https://plowside.t.me"
+                "url":"https://t.me/plowside"
             }
         ]
     }
