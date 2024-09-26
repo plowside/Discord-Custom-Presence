@@ -137,7 +137,15 @@ class spotify_client: # spf_client
 			self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
 			self.authed = True
 			logging.info('[spf_client] Connected to session')
+		except requests.exceptions.ConnectionError:
+			logging.debug('[spf_client] Bad proxy, changing')
+			self.change_proxy()
+			self.auth()
 		except requests.exceptions.ConnectTimeout:
+			logging.debug('[spf_client] Bad proxy, changing')
+			self.change_proxy()
+			self.auth()
+		except requests.exceptions.ProxyError:
 			logging.debug('[spf_client] Bad proxy, changing')
 			self.change_proxy()
 			self.auth()
@@ -183,9 +191,13 @@ class spotify_client: # spf_client
 	def change_proxy(self):
 		logging.debug('[spf_client] Changing proxy')
 		if len(self.proxies) == 0:
-			logging.info('[spf_client] No proxies, getting new')
-			self.proxies = asyncio.new_event_loop().run_until_complete(proxy_scraper().get_proxy())
-		
+			if proxy_auto_scrape:
+				logging.info('[spf_client] No proxies, getting new')
+				self.proxies = asyncio.new_event_loop().run_until_complete(proxy_scraper().get_proxy())
+			else:
+				logging.info('[spf_client] No proxies')
+				return
+
 		proxy = self.proxies.pop(0)
 		_proxy = proxy if ('@' in proxy or len(proxy.split(':')) == 2) else f"{proxy.split(':')[2]}:{proxy.split(':')[3]}@{proxy.split(':')[0]}:{proxy.split(':')[1]}"
 		self.session.proxies = {'http':f'http://{_proxy}','https':f'http://{_proxy}'}

@@ -1,6 +1,6 @@
 ############################## SCRIPT SETTINGS ###########################
-proxy_auto_scrape = True # Automatic proxy scraping from third-party resources [BETA]
-proxies = ['z34VxR:2rF0MqMYH1@31.40.203.111:5500'] # HTTP Proxy in one of the specified formats: [ip:port:login:password, login:password@ip:port] or None
+proxy_auto_scrape = False # Automatic proxy scraping from third-party resources [BETA]
+proxies = [] # HTTP Proxy in one of the specified formats: [ip:port:login:password, login:password@ip:port] or None
 
 discord_bot_id = 1267065998884737087 # https://discord.com/developers/applications ==> Create application ==> General Information ==> APPLICATION ID
 
