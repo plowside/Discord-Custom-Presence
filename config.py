@@ -14,5 +14,5 @@ discord_bot_id = 1267065998884737087 # https://discord.com/developers/applicatio
 '''
 spotify_client_id = '7dd90ccb229d42cab7c3f584d55f7413' # Spotify Client ID
 spotify_client_secret = '53d843d96b3b4539aacdd907e0c46c19' # Spotify Client Secret
-spotify_client_redirect_uri = 'https://plowside.t.me' # Spotify Redirect Uri
+spotify_client_redirect_uri = 'https://t.me/LUCKYBANANA5894' # Spotify Redirect Uri
 spotify_profile_url = 'https://open.spotify.com/user/31il3gpmorrtonzrblwy4sg4ydki' # Your spotify profile url

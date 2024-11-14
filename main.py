@@ -1,5 +1,3 @@
-##!C:/Users/plows/OneDrive/Documents/GitHub/Discord-Custom-Presence/venv/Scripts/python.exe
-
 import browser_cookie3, win32process, pypresence, threading, traceback, win32gui, win32con, requests, asyncio, spotipy, logging, hashlib, psutil, httpx, json, base64, time, sys, os, re
 from urllib.parse import parse_qsl, urlparse
 from spotipy.oauth2 import SpotifyOAuth
@@ -115,7 +113,7 @@ class spotify_client: # spf_client
 				if req.status_code == 200:
 					self.authed = True
 					self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
-					
+
 					return logging.info('[spf_client] Connected to session')
 
 			logging.info('[spf_client] Creating session')
@@ -133,7 +131,7 @@ class spotify_client: # spf_client
 			token["expires_at"] = int(time.time()) + token["expires_in"]
 			open('.cache', 'w').write(json.dumps(token))
 			logging.info('[spf_client] Session created')
-			
+
 			self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
 			self.authed = True
 			logging.info('[spf_client] Connected to session')
@@ -152,6 +150,12 @@ class spotify_client: # spf_client
 		except KeyError:
 			self.authed = False
 			logging.warning('[spf_client] Invalid credentials, using manually mode for Spotify')
+		except PermissionError:
+			self.authed = False
+			logging.warning('[spf_client] Error while getting cookies from browser, using manually mode for Spotify')
+		except browser_cookie3.BrowserCookieError:
+			self.authed = False
+			logging.warning('[spf_client] Error while parsing cookies, using manually mode for Spotify')
 		except Exception as error:
 			self.authed = False
 			logging.error(f'[spf_client] Error while creating session: {error} | {type(error)}')
@@ -179,7 +183,6 @@ class spotify_client: # spf_client
 				if len(proc_data) == 0: skip = True
 				else:
 					track_id = proc_data[0]['text']
-
 					track_artist = track_id.split(' - ')[0]
 					track_name = track_id.split(' - ')[1]
 					track_url = spotify_profile_url
@@ -299,14 +302,27 @@ while True:
 
 				if presset_data.get('start') == 'current_timestamp': presset_data['start'] = client.get_start(x)
 				match x:
+					case 'pycharm64.exe':
+						filename = getWindowSizes('pycharm64.exe')
+						if len(filename) == 0: continue
+						filename = filename[0]['text']
+
+						if not (client.pid == procs[x] and client.check_data.get('filename') == filename):
+							client.check_data = {'filename': filename}
+
+							if len(filename) > 0:
+								project_name = filename.split(' – ')[0]
+								working_filename = filename.split(' – ')[-1]
+								activity_data = replace_values(presset_data, [('{filename}', project_name)])
+
 					case 'sublime_text.exe':
 						filename = [x for x in getWindowSizes() if '- Sublime Text' in x['text']]
 						if len(filename) == 0: continue
 						filename = filename[0]['text']
-						
+
 						if not (client.pid == procs[x] and client.check_data.get('filename') == filename):
 							client.check_data = {'filename': filename}
-							
+
 							if len(filename) > 0:
 								activity_data = replace_values(presset_data, [('{filename}', filename.split('\\')[-1].split(' ')[0])])
 

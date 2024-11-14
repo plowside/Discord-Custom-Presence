@@ -86,6 +86,13 @@
         "large_text":"Dying Light 2"
     },
     
+    "pycharm64.exe":{
+        "state":"Работаю над {filename}",
+        "start":"current_timestamp",
+        "large_image":"https://raw.githubusercontent.com/plowside/plowside/refs/heads/main/assets/PyCharm_Icon.png",
+        "large_text":"PyCharm"
+    },
+    
     "sublime_text.exe":{
         "state":"Работаю над {filename}",
         "start":"current_timestamp",

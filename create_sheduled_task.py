@@ -10,8 +10,9 @@ def create_task(task_name, program_path, arguments="", working_directory=""):
 	
 	# Настройка основных параметров задачи
 	task.RegistrationInfo.Description = task_name
-	task.RegistrationInfo.Author = "plowside"
-	
+	task.RegistrationInfo.Author = "LUCKYBANANA5894"
+	task.Principal.RunLevel = 1
+
 	# Создание объекта действия
 	action = task.Actions.Create(0)
 	action.Path = program_path
@@ -23,13 +24,17 @@ def create_task(task_name, program_path, arguments="", working_directory=""):
 	trigger.Enabled = True
 	
 	# Добавление задачи в папку корневой задачи
-	root_folder.RegisterTaskDefinition(
-		task_name,
-		task,
-		6,  # 6 stands for 'CreateOrUpdate' task
-		'', '',  # Empty user and password strings
-		3,  # 'S4U' task logon type
-	)
+	try:
+		root_folder.RegisterTaskDefinition(
+			task_name,
+			task,
+			6,  # 6 stands for 'CreateOrUpdate' task
+			'', '',  # Empty user and password strings
+			3,  # 'S4U' task logon type
+		)
+		print('[+] Discord presence успешно добавлено в автозапуск')
+	except Exception as e:
+		print(f'[-] Запустите от имени администратора. Ошибка: {e}')
 
 # Пример использования
 if __name__ == "__main__":
