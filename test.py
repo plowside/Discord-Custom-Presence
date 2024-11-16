@@ -6,91 +6,6 @@ from cachetools import TTLCache
 from config import *
 
 
-#####################################################################
-open('log.log', 'w', encoding='utf-8')
-logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s', level=logging.DEBUG, handlers=[logging.StreamHandler(), logging.FileHandler("log.log", mode='w', encoding='utf-8')])
-logging.getLogger('spotipy').setLevel(logging.INFO)
-logging.getLogger('requests').setLevel(logging.INFO)
-logging.getLogger('httpx').setLevel(logging.ERROR)
-logging.getLogger('httpcore').setLevel(logging.ERROR)
-logging.getLogger('urllib3').setLevel(logging.INFO)
-
-def crash_handler(exctype, value, traceback_):
-	logging.error(''.join(traceback.format_exception(exctype, value, traceback_)))
-sys.excepthook = crash_handler
-
-#####################################################################
-class custom_presence: # client
-	def __init__(self):
-		self.rpc = None
-		self.rpc_connected = False
-		self.rpc_id = None
-		self.is_idle = True
-		self.pid = None
-		self.cache = TTLCache(maxsize=100, ttl=7200)
-		self.check_data = {}
-		self.detections = {}
-
-	def create_rpc(self, bot_id = discord_bot_id):
-		if self.rpc:
-			logging.debug('[custom_presence] Closing RPC')
-			try:
-				self.rpc.close()
-				logging.debug('[custom_presence] RPC closed')
-			except pypresence.exceptions.PipeClosed: pass
-			except Exception as e: logging.error(f'[custom_presence] Error on closing RPC: {e}')
-			self.rpc_connected = False
-		
-		self.rpc = pypresence.Presence(bot_id)
-		logging.debug('[custom_presence] Connecting to RPC')
-		self.rpc_connect()
-		logging.debug('[custom_presence] Connected to RPC')
-
-		self.rpc_id = bot_id
-
-	def rpc_connect(self):
-		if self.rpc_connected: return
-		try:
-			self.rpc.connect()
-			self.rpc_connected = True
-		except pypresence.exceptions.DiscordNotFound: self.await_discord()
-		except Exception as error:
-			logging.error(f'[custom_presence] Error on connecting RPC: {error}')
-			if 'Message: User logged out' in str(error):
-				return self.create_rpc()
-		finally: self.rpc_connect()
-
-	def update_rpc(self, is_idle = False, **kwargs):
-		self.is_idle = is_idle
-
-		try: self.rpc.update(**kwargs)
-		except pypresence.exceptions.DiscordNotFound: self.await_discord()
-		except pypresence.exceptions.PipeClosed: self.create_rpc(discord_bot_id)
-		except Exception as error: return logging.error(f'[custom_presence] Error on updating RPC: {error}')
-		finally: self.rpc.update(**kwargs)
-
-	def get_start(self, proc):
-		ts = self.cache.get(proc)
-		if not ts: self.cache[proc] = time.time()
-		else: self.cache[proc] = ts
-		return self.cache.get(proc)
-
-	def await_discord(self):
-		logging.debug('[custom_presence] No running copies of the discord were found')
-		pattern = re.compile(r'.*discord.*\.exe$')
-		while True:
-			try:
-				while not pattern.match(', '.join([x.name().lower() for x in psutil.process_iter()])):
-					time.sleep(1)
-				break
-			except: ...
-		logging.debug('[custom_presence] A copy of the running discord was found')
-		time.sleep(10)
-
-	def detections_checker(self):
-		try: self.detections = json.loads(open('.detections.json', 'r', encoding='utf-8').read())
-		except Exception as error: logging.error(f'[custom_presence] Error on detections_watcher: {error}')
-
 class spotify_client: # spf_client
 	def __init__(self, spotify_client_id = None, spotify_client_secret = None, spotify_client_redirect_uri = None, proxies = list()):
 		self.spotify_client_id = spotify_client_id
@@ -174,7 +89,7 @@ class spotify_client: # spf_client
 			if self.authed and not force_manually:
 				try: current_track = self.spy_client.current_user_playing_track()['item']
 				except: return self.current_track(True)
-				
+
 				track_id = current_track['id']
 				track_name = current_track['name']
 				track_artist = current_track['album']['artists'][0]['name']
@@ -206,6 +121,43 @@ class spotify_client: # spf_client
 		proxy = self.proxies.pop(0)
 		_proxy = proxy if ('@' in proxy or len(proxy.split(':')) == 2) else f"{proxy.split(':')[2]}:{proxy.split(':')[3]}@{proxy.split(':')[0]}:{proxy.split(':')[1]}"
 		self.session.proxies = {'http':f'http://{_proxy}','https':f'http://{_proxy}'}
+
+def isRealWindow(hWnd):
+	if not win32gui.IsWindowVisible(hWnd) or win32gui.GetParent(hWnd) != 0: return False
+	if (((win32gui.GetWindowLong(hWnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_TOOLWINDOW) == 0 and win32gui.GetWindow(hWnd, win32con.GW_OWNER) == 0) or ((win32gui.GetWindowLong(hWnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_APPWINDOW != 0) and not win32gui.GetWindow(hWnd, win32con.GW_OWNER) == 0)):
+		if win32gui.GetWindowText(hWnd): return True
+	else: return False
+
+def getWindowSizes(proc_name = None):
+	def callback(hWnd, windows):
+		if not isRealWindow(hWnd): return
+		name = psutil.Process(win32process.GetWindowThreadProcessId(hWnd)[1]).name().lower()
+		if proc_name and name != proc_name: return
+
+		windows.append({'text':win32gui.GetWindowText(hWnd),'hwnd':hWnd, 'process': name})
+
+	windows = []
+	win32gui.EnumWindows(callback, windows)
+	return windows
+
+def kwargs_to_dict(base_dict = None, **kwargs):
+	if not base_dict: base_dict = {}
+	base_dict.update(kwargs)
+
+	return base_dict
+
+def replace_values(data, replacements):
+	if isinstance(data, dict):
+		for key, value in data.items():
+			data[key] = replace_values(value, replacements)
+	elif isinstance(data, list):
+		for i, item in enumerate(data):
+			data[i] = replace_values(item, replacements)
+	elif isinstance(data, str):
+		for pattern, replacement in replacements:
+			data = data.replace(pattern, replacement)
+	return data
+
 
 class proxy_scraper:
 	def __init__(self):
@@ -243,137 +195,5 @@ class proxy_scraper:
 		except: pass
 
 
-def isRealWindow(hWnd):
-	if not win32gui.IsWindowVisible(hWnd) or win32gui.GetParent(hWnd) != 0: return False
-	if (((win32gui.GetWindowLong(hWnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_TOOLWINDOW) == 0 and win32gui.GetWindow(hWnd, win32con.GW_OWNER) == 0) or ((win32gui.GetWindowLong(hWnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_APPWINDOW != 0) and not win32gui.GetWindow(hWnd, win32con.GW_OWNER) == 0)):
-		if win32gui.GetWindowText(hWnd): return True
-	else: return False
-
-def getWindowSizes(proc_name = None):
-	def callback(hWnd, windows):
-		if not isRealWindow(hWnd): return
-		name = psutil.Process(win32process.GetWindowThreadProcessId(hWnd)[1]).name().lower()
-		if proc_name and name != proc_name: return
-
-		windows.append({'text':win32gui.GetWindowText(hWnd),'hwnd':hWnd, 'process': name})
-
-	windows = []
-	win32gui.EnumWindows(callback, windows)
-	return windows
-
-def kwargs_to_dict(base_dict = None, **kwargs):
-	if not base_dict: base_dict = {}
-	base_dict.update(kwargs)
-	
-	return base_dict
-
-def replace_values(data, replacements):
-	if isinstance(data, dict):
-		for key, value in data.items():
-			data[key] = replace_values(value, replacements)
-	elif isinstance(data, list):
-		for i, item in enumerate(data):
-			data[i] = replace_values(item, replacements)
-	elif isinstance(data, str):
-		for pattern, replacement in replacements:
-			data = data.replace(pattern, replacement)
-	return data
-
-#####################################################################
-client = custom_presence()
 spf_client = spotify_client(spotify_client_id, spotify_client_secret, spotify_client_redirect_uri, proxies)
-
-client.create_rpc(discord_bot_id)
-#####################################################################
-repeats = 11
-while True:
-	try:
-		if repeats > 5:
-			client.detections_checker()
-			repeats = 0
-
-		procs = {x.name().lower(): x.pid for x in psutil.process_iter()}
-		activity_data = {}
-		client.is_idle = True
-
-		for i, x in enumerate(client.detections):
-			if x in procs:
-				client.is_idle = False
-
-				presset_data = client.detections[x].copy()
-
-				if presset_data.get('start') == 'current_timestamp':
-					presset_data['start'] = client.get_start(x)
-
-				match x:
-					case 'pycharm64.exe':
-						filename = getWindowSizes('pycharm64.exe')
-						if len(filename) == 0: continue
-						filename = filename[0]['text']
-
-						if not (client.pid == procs[x] and client.check_data.get('filename') == filename):
-							client.check_data = {'filename': filename}
-
-							if len(filename) > 0:
-								project_name = filename.split(' – ')[0]
-								working_filename = filename.split(' – ')[-1]
-								activity_data = replace_values(presset_data, [('{filename}', project_name)])
-
-					case 'sublime_text.exe':
-						filename = [x for x in getWindowSizes() if '- Sublime Text' in x['text']]
-						if len(filename) == 0: continue
-						filename = filename[0]['text']
-
-						if not (client.pid == procs[x] and client.check_data.get('filename') == filename):
-							client.check_data = {'filename': filename}
-
-							if len(filename) > 0:
-								activity_data = replace_values(presset_data, [('{filename}', filename.split('\\')[-1].split(' ')[0])])
-
-					case 'spotify.exe':
-						track_data = spf_client.current_track()
-						if track_data['skip']: continue
-						track_id = track_data['track_id']
-						track_artist = track_data['track_artist']
-						track_name = track_data['track_name']
-						track_url = track_data['track_url']
-						album_picture = track_data['album_picture']
-
-						if track_id == client.check_data.get('track_id'):
-							break
-
-						client.check_data['track_id'] = track_id
-						activity_data = replace_values(presset_data, [('{track_artist}', track_artist), ('{track_name}', track_name), ('{track_url}', track_url), ('{album_picture}', album_picture)])
-
-					case 'chrome.exe':
-						tab_name = [x for x in getWindowSizes() if '- Google Chrome' in x['text'] and 'ornhub.com' not in x['text'] and 'орнхаб' not in x['text'].lower()]
-						if len(tab_name) == 0: continue
-						tab_name = tab_name[0]['text'][:-16][0:128]
-
-						if not (client.pid == procs[x] and client.check_data.get('tab_name') == tab_name):
-							client.check_data = {'tab_name': tab_name}
-
-							activity_data = replace_values(presset_data, [('{tab_name}', tab_name)])
-
-					case _:
-						item_hash = hashlib.sha256(json.dumps(presset_data, sort_keys=True).encode()).hexdigest()
-						if client.check_data.get('index') != i or client.check_data.get('hash') != item_hash:
-							client.check_data['index'] = i
-							client.check_data['hash'] = item_hash
-							activity_data = presset_data
-
-				if len(activity_data) > 0:
-					client.pid = procs[x]
-					logging.info(f'New activity: {x}')
-				break
-
-		
-		if client.is_idle:
-			client.check_data = {}
-			activity_data = client.detections['idle']
-		
-		if len(activity_data) > 0: client.update_rpc(client.is_idle, **activity_data)
-	except pypresence.exceptions.PipeClosed: client.create_rpc(discord_bot_id)
-	except Exception as error: logging.error(f'Error on procces watcher: {error}\n{traceback.format_exc()}')
-	time.sleep(2)
-	repeats += 1
+print(spf_client.current_track())
