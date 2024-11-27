@@ -30,6 +30,21 @@
         "large_text":"Minecraft"
     },
 
+    "shproto-win64-shipping.exe":{
+        "state":"Silent Hill 2",
+        "start": "current_timestamp",
+        "large_image":"https://upload.wikimedia.org/wikipedia/ru/c/c1/Silent_Hill_2_remake_cover.jpg",
+        "large_text":"Silent Hill 2"
+    },
+
+
+    "stalker2-win64-shipping.exe":{
+        "state":"Ждалкер 2",
+        "start": "current_timestamp",
+        "large_image":"https://raw.githubusercontent.com/plowside/plowside/refs/heads/main/assets/st2.png",
+        "large_text":"S.T.A.L.K.E.R. 2: Heart of Chornobyl"
+    },
+
     "pendriverpro-win64-shipping.exe":{
         "state":"Малыш на пенисе",
         "start": "current_timestamp",
