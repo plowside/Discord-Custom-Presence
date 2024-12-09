@@ -22,6 +22,14 @@
         "large_text":"Euro Truck Simulator 2"
     },
 
+    "openbullet2.native.exe":{
+        "details": "wewillbe7figure",
+        "state":"$$$",
+        "start": "current_timestamp",
+        "large_image":"https://raw.githubusercontent.com/plowside/plowside/refs/heads/main/assets/op2.png",
+        "large_text":"OpenBullet 2"
+    },
+
     "javaw.exe":{
         "details": "Ванильный 1.21",
         "state":"plowside.aternos.me:19465",
