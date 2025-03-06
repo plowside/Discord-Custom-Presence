@@ -296,39 +296,39 @@ while True:
 		activity_data = {}
 		client.is_idle = True
 
-		for i, x in enumerate(client.detections):
-			if x in procs:
+		for i, process_name in enumerate(client.detections):
+			if process_name in procs:
 				client.is_idle = False
 
-				presset_data = client.detections[x].copy()
+				preset_data = client.detections[process_name].copy()
 
-				if presset_data.get('start') == 'current_timestamp':
-					presset_data['start'] = client.get_start(x)
+				if preset_data.get('start') == 'current_timestamp':
+					preset_data['start'] = client.get_start(process_name)
 
-				match x:
+				match process_name:
 					case 'pycharm64.exe':
 						filename = getWindowSizes('pycharm64.exe')
 						if len(filename) == 0: continue
 						filename = filename[0]['text']
 
-						if not (client.pid == procs[x] and client.check_data.get('filename') == filename):
+						if not (client.pid == procs[process_name] and client.check_data.get('filename') == filename):
 							client.check_data = {'filename': filename}
 
 							if len(filename) > 0:
 								project_name = filename.split(' – ')[0]
 								working_filename = filename.split(' – ')[-1]
-								activity_data = replace_values(presset_data, [('{filename}', project_name)])
+								activity_data = replace_values(preset_data, [('{filename}', project_name)])
 
 					case 'sublime_text.exe':
-						filename = [x for x in getWindowSizes() if '- Sublime Text' in x['text']]
+						filename = [process_name for process_name in getWindowSizes() if '- Sublime Text' in process_name['text']]
 						if len(filename) == 0: continue
 						filename = filename[0]['text']
 
-						if not (client.pid == procs[x] and client.check_data.get('filename') == filename):
+						if not (client.pid == procs[process_name] and client.check_data.get('filename') == filename):
 							client.check_data = {'filename': filename}
 
 							if len(filename) > 0:
-								activity_data = replace_values(presset_data, [('{filename}', filename.split('\\')[-1].split(' ')[0])])
+								activity_data = replace_values(preset_data, [('{filename}', filename.split('\\')[-1].split(' ')[0])])
 
 					case 'spotify.exe':
 						track_data = spf_client.current_track()
@@ -343,37 +343,36 @@ while True:
 							break
 
 						client.check_data['track_id'] = track_id
-						activity_data = replace_values(presset_data, [('{track_artist}', track_artist), ('{track_name}', track_name), ('{track_url}', track_url), ('{album_picture}', album_picture)])
+						activity_data = replace_values(preset_data, [('{track_artist}', track_artist), ('{track_name}', track_name), ('{track_url}', track_url), ('{album_picture}', album_picture)])
 
 					case 'chrome.exe':
-						tab_name = [x for x in getWindowSizes() if '- Google Chrome' in x['text'] and 'ornhub.com' not in x['text'] and 'орнхаб' not in x['text'].lower()]
+						tab_name = [process_name for process_name in getWindowSizes() if '- Google Chrome' in process_name['text'] and 'ornhub' not in process_name['text'] and 'орнхаб' not in process_name['text'].lower()]
 						if len(tab_name) == 0: continue
 						tab_name = tab_name[0]['text'][:-16][0:128]
 
-						if not (client.pid == procs[x] and client.check_data.get('tab_name') == tab_name):
+						if not (client.pid == procs[process_name] and client.check_data.get('tab_name') == tab_name):
 							client.check_data = {'tab_name': tab_name}
 
-							activity_data = replace_values(presset_data, [('{tab_name}', tab_name)])
+							activity_data = replace_values(preset_data, [('{tab_name}', tab_name)])
 
 					case _:
-						item_hash = hashlib.sha256(json.dumps(presset_data, sort_keys=True).encode()).hexdigest()
+						item_hash = hashlib.sha256(json.dumps(preset_data, sort_keys=True).encode()).hexdigest()
 						if client.check_data.get('index') != i or client.check_data.get('hash') != item_hash:
 							client.check_data['index'] = i
 							client.check_data['hash'] = item_hash
-							activity_data = presset_data
+							activity_data = preset_data
 
 				if len(activity_data) > 0:
-					client.pid = procs[x]
-					logging.info(f'New activity: {x}')
+					client.pid = procs[process_name]
+					logging.info(f'New activity: {process_name}')
 				break
 
 		
 		if client.is_idle:
 			client.check_data = {}
 			activity_data = client.detections['idle']
-		
 		if len(activity_data) > 0: client.update_rpc(client.is_idle, **activity_data)
 	except pypresence.exceptions.PipeClosed: client.create_rpc(discord_bot_id)
-	except Exception as error: logging.error(f'Error on procces watcher: {error}\n{traceback.format_exc()}')
+	except Exception as error: logging.error(f'Error on proces watcher: {error}\n{traceback.format_exc()}')
 	time.sleep(2)
 	repeats += 1

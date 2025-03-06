@@ -15,6 +15,20 @@
         "small_text":"текст для ссылки"
     },
 
+    "valorant.exe":{
+        "details": "валорантик",
+        "start": "current_timestamp",
+        "large_image":"https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Euro_Truck_Simulator_2_cover.jpg/220px-Euro_Truck_Simulator_2_cover.jpg",
+        "large_text":"Valorant"
+    },
+
+    "kingdomcome.exe":{
+        "details": "это кам",
+        "start": "current_timestamp",
+        "large_image":"https://media1.tenor.com/m/JpAgEDS9qY8AAAAd/milk-milk-man.gif",
+        "large_text":"Kingdom Come: Deliverance II"
+    },
+
     "eurotrucks2.exe":{
         "details": "Дальнобойщик Антошка",
         "start": "current_timestamp",
@@ -133,7 +147,7 @@
             },
             {
                 "label":"Telegram",
-                "url":"https://plowside.t.me"
+                "url":"https://t.me/LUCKYBANANA5894"
             }
         ],
         "large_image":"{album_picture}",
@@ -149,7 +163,7 @@
 
     "discord.exe":{
         "state":"сучка",
-        "large_image": "https://i.imgur.com/9R03Z3w.gif",
+        "large_image": "https://s7.gifyu.com/images/Se48s.gif",
         "large_text": "инопришленец"
     },
     
@@ -158,7 +172,7 @@
         "buttons":[
             {
                 "label":"Telegram",
-                "url":"https://t.me/plowside"
+                "url":"https://t.me/LUCKYBANANA5894"
             }
         ]
     }
