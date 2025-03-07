@@ -1,60 +1,47 @@
-chcp 65001 > nul
 @echo off
-title Discord Presence Setup
-color 0A
+setlocal
 
-echo ==================================================
-echo [*] Проверка виртуального окружения...
-echo ==================================================
-if not exist "venv\" (
-  echo [*] Виртуальное окружение не найдено. Создаю...
-  python -m venv venv
-  if %ERRORLEVEL% neq 0 (
-    echo [-] Ошибка при создании виртуального окружения!
-    pause
-    exit /b 1
-  )
-  echo [+] Виртуальное окружение успешно создано.
-) else (
-  echo [+] Виртуальное окружение уже существует.
+:: Check if the script is running with administrator privileges
+net session >nul 2>&1
+if %errorLevel% NEQ 0 (
+    echo Running as administrator...
+    Powershell -Command "Start-Process '%~f0' -Verb RunAs"
+    exit /b
 )
 
-echo.
-echo ==================================================
-echo [*] Активация виртуального окружения...
-echo ==================================================
-call venv\Scripts\activate
 
-echo.
-echo ==================================================
-echo [*] Установка зависимостей...
-echo ==================================================
-pip install -r requirements.txt
-if %ERRORLEVEL% neq 0 (
-  echo [-] Ошибка при установке зависимостей!
-  pause
-  deactivate
-  exit /b 1
+:: Change to the directory of the script
+cd /d %~dp0
+
+
+set VENV_DIR=venv
+
+:: Check if the virtual environment exists
+if not exist %VENV_DIR% (
+    echo Virtual environment not found. Creating...
+    python -m venv %VENV_DIR%
 )
-echo [+] Зависимости установлены.
 
-echo.
-echo ==================================================
-echo [*] Настройка автозапуска Discord Presence...
-echo ==================================================
-powershell -Command "Start-Process -FilePath 'venv\Scripts\python.exe' -ArgumentList 'create_sheduled_task.py' -Verb RunAs"
-if %ERRORLEVEL% neq 0 (
-  echo [-] Ошибка при добавлении задачи в планировщик!
-  pause
-  deactivate
-  exit /b 1
+:: Check if the requirements.txt file exists
+if exist requirements.txt (
+    echo Checking installed dependencies from requirements.txt...
+
+    venv\Scripts\pip freeze > installed_packages.txt
+   
+    :: Loop through each package in requirements.txt
+    for /f "tokens=*" %%i in (requirements.txt) do (
+        findstr /i "%%i" installed_packages.txt >nul
+        if errorlevel 1 (
+            echo Installing %%i...
+            venv\Scripts\pip install %%i
+        ) else (
+            echo %%i is already installed.
+        )
+    )
 )
-echo [+] Discord Presence успешно добавлен в автозапуск.
 
-echo.
-echo ==================================================
-echo [*] Завершено! Нажмите любую клавишу для выхода.
-echo ==================================================
+:: Run the script to create a scheduled task
+venv\Scripts\python.exe create_sheduled_task.py
+
+endlocal
 pause
-deactivate
-exit
