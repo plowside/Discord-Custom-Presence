@@ -45,8 +45,8 @@
     },
 
     "javaw.exe":{
-        "details": "Ванильный 1.21",
-        "state":"plowside.aternos.me:19465",
+        "details": "майнкамф 1.20.1",
+        "state":"big.penis.me:1488",
         "start": "current_timestamp",
         "large_image":"https://cdn.sortiraparis.com/images/80/66131/870109-minecraft-legends-date-de-sortie-gameplay-le-point-sur-le-jeu-d-action-strategie-de-mojang.jpg",
         "large_text":"Minecraft"
@@ -58,7 +58,6 @@
         "large_image":"https://upload.wikimedia.org/wikipedia/ru/c/c1/Silent_Hill_2_remake_cover.jpg",
         "large_text":"Silent Hill 2"
     },
-
 
     "stalker2-win64-shipping.exe":{
         "state":"Ждалкер 2",
@@ -75,9 +74,16 @@
     },
 
     "deadbydaylight-win64-shipping.exe":{
-        "state":"Подвергаюсь насилию",
+        "state":"Ада Бонг P52/P100",
         "start": "current_timestamp",
-        "large_image":"https://media1.tenor.com/m/us4kCmzGTeEAAAAd/dbd-dead-by-daylight.gif",
+        "large_image":"https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmFmNWUycW1pcW5zMW81OHQ3MXFoYnlqcHh5ZWVsa2FzMjJlODA2aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gYlqe7GpEQ2yIKEjgw/giphy.gif",
+        "large_text":"Dead By Daylight"
+    },
+
+    "sam.game.exe":{
+        "state":"жеска ебут в попу",
+        "start": "current_timestamp",
+        "large_image":"https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmFmNWUycW1pcW5zMW81OHQ3MXFoYnlqcHh5ZWVsa2FzMjJlODA2aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gYlqe7GpEQ2yIKEjgw/giphy.gif",
         "large_text":"Dead By Daylight"
     },
 

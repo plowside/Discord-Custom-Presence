@@ -291,8 +291,8 @@ while True:
 		if repeats > 5:
 			client.detections_checker()
 			repeats = 0
-
-		procs = {x.name().lower(): x.pid for x in psutil.process_iter()}
+		temp_procs = psutil.process_iter()
+		procs = {x.name().lower(): x.pid for x in temp_procs}
 		activity_data = {}
 		client.is_idle = True
 
