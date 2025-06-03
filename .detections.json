@@ -18,8 +18,23 @@
     "valorant.exe":{
         "details": "валорантик",
         "start": "current_timestamp",
-        "large_image":"https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Euro_Truck_Simulator_2_cover.jpg/220px-Euro_Truck_Simulator_2_cover.jpg",
-        "large_text":"Valorant"
+        "large_image": "https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Euro_Truck_Simulator_2_cover.jpg/220px-Euro_Truck_Simulator_2_cover.jpg",
+        "large_text": "Valorant"
+    },
+
+    "readyornot-win64-shipping.exe":{
+        "details": "ready to kill",
+        "start": "current_timestamp",
+        "large_image": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1144200/header.jpg",
+        "large_text": "READY OR NOT"
+    },
+
+    "helldivers2.exe":{
+        "details": "хелнигерс 2",
+        "state":"#люблюкосмонацизм",
+        "start": "current_timestamp",
+        "large_image": "https://media.giphy.com/media/tyyEbtcaIaG8JFMbcT/giphy.gif",
+        "large_text": "Helldivers 2"
     },
 
     "kingdomcome.exe":{
@@ -34,6 +49,14 @@
         "start": "current_timestamp",
         "large_image":"https://upload.wikimedia.org/wikipedia/en/thumb/0/0e/Euro_Truck_Simulator_2_cover.jpg/220px-Euro_Truck_Simulator_2_cover.jpg",
         "large_text":"Euro Truck Simulator 2"
+    },
+
+    "dayz_x64.exe":{
+        "details": "сосание",
+        "state":"бегу с мишей за тир 4 шмотками",
+        "start": "current_timestamp",
+        "large_image":"https://s.auto.drom.ru/i24231/c/photos/fullsize/nissan/dayz/nissan_dayz_887200.jpg",
+        "large_text":"DayZ"
     },
 
     "openbullet2.native.exe":{
@@ -59,6 +82,20 @@
         "large_text":"Silent Hill 2"
     },
 
+    "bonelab_steam_windows64.exe":{
+        "state":"Garry's Mod VR",
+        "start": "current_timestamp",
+        "large_image":"https://staticdelivery.nexusmods.com/Images/games/4_3/tile_4832.jpg",
+        "large_text":"BONELAB"
+    },
+
+    "pavlov-win64-shipping.exe":{
+        "state":"CS в VR",
+        "start": "current_timestamp",
+        "large_image":"https://evolvevr.ca/wp-content/uploads/2018/08/PAVLOV.png",
+        "large_text":"Pavlov VR"
+    },
+
     "stalker2-win64-shipping.exe":{
         "state":"Ждалкер 2",
         "start": "current_timestamp",
@@ -74,7 +111,7 @@
     },
 
     "deadbydaylight-win64-shipping.exe":{
-        "state":"Ада Бонг P52/P100",
+        "state":"Ада Бонг P63/P100",
         "start": "current_timestamp",
         "large_image":"https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmFmNWUycW1pcW5zMW81OHQ3MXFoYnlqcHh5ZWVsa2FzMjJlODA2aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gYlqe7GpEQ2yIKEjgw/giphy.gif",
         "large_text":"Dead By Daylight"
@@ -102,8 +139,7 @@
     },
     
     "escapefromtarkov.exe":{
-        "state":"Лучший вайп",
-        "details":"Смертей: 1059",
+        "details":"Торгую балумбакоинами",
         "start":"current_timestamp",
         "buttons":[
             {
@@ -113,6 +149,26 @@
         ],
         "large_image":"https://cdn.discordapp.com/app-icons/1191411733592551444/a39a2bfe0fb42f24983942eef18ef92f.png?size=256",
         "large_text":"Игра года"
+    },
+    
+    "uagame.exe":{
+        "details":"Убийца таркова",
+        "start":"current_timestamp",
+        "buttons":[
+            {
+                "label":"Купить",
+                "url":"https://www.escapefromtarkov.com/preorder-page"
+            }
+        ],
+        "large_image":"https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRreZcs4VIQbu-KDlvjZ972VqZBjUauGjrDhA&s",
+        "large_text":"Убийца таркова"
+    },
+    
+    "squadgame.exe":{
+        "details":"пидар пидар пидар",
+        "start":"current_timestamp",
+        "large_image":"https://cdn.prod.website-files.com/651dd1cea3817995c17fa3c1/65e0e49452009f2a2920f3ce_1200x630-key-art.jpeg",
+        "large_text":"Squad"
     },
    
     "shootergame.exe":{
@@ -143,12 +199,26 @@
         "large_text":"Sublime Text"
     },
     
+    "robloxstudiobeta.exe":{
+        "state":"Работаю над {filename}",
+        "start":"current_timestamp",
+        "large_image":"https://cdn-1.webcatalog.io/catalog/roblox-studio/roblox-studio-icon-filled-256.png",
+        "large_text":"Roblox Studio"
+    },
+    
+    "robloxstudio.exe":{
+        "state":"Работаю над {filename}",
+        "start":"current_timestamp",
+        "large_image":"https://cdn-1.webcatalog.io/catalog/roblox-studio/roblox-studio-icon-filled-256.png",
+        "large_text":"Roblox Studio"
+    },
+    
     "spotify.exe":{
         "state":"{track_name}",
         "details":"{track_artist}",
         "buttons":[
             {
-                "label":"Послушать ебейший трек",
+                "label":"Послушать",
                 "url":"{track_url}"
             },
             {

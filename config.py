@@ -2,7 +2,7 @@
 proxy_auto_scrape = False # Automatic proxy scraping from third-party resources [BETA]
 proxies = [] # HTTP Proxy in one of the specified formats: [ip:port:login:password, login:password@ip:port] or None
 
-discord_bot_id = 1267065998884737087 # https://discord.com/developers/applications ==> Create application ==> General Information ==> APPLICATION ID
+discord_bot_id = 1356296211908264129 # https://discord.com/developers/applications ==> Create application ==> General Information ==> APPLICATION ID
 
 ############################## SPOTIFY SETTINGS ##########################
 '''
