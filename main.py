@@ -362,7 +362,7 @@ while True:
 						if track_id == client.check_data.get('track_id'):
 							break
 
-						client.check_data['track_id'] = track_id
+						client.check_data = {'track_id': track_id}
 						activity_data = replace_values(preset_data, [('{track_artist}', track_artist), ('{track_name}', track_name), ('{track_url}', track_url), ('{album_picture}', album_picture)])
 
 					case 'chrome.exe':
@@ -373,15 +373,13 @@ while True:
 
 						if not (client.pid == procs[process_name] and client.check_data.get('tab_name') == tab_name):
 							client.check_data = {'tab_name': tab_name}
-
 							activity_data = replace_values(preset_data, [('{tab_name}', tab_name)])
 
 					case _:
 						logging.info(f'+[{ts}] case: {process_name}')
 						item_hash = hashlib.sha256(json.dumps(preset_data, sort_keys=True).encode()).hexdigest()
 						if client.check_data.get('index') != i or client.check_data.get('hash') != item_hash:
-							client.check_data['index'] = i
-							client.check_data['hash'] = item_hash
+							client.check_data = {'index': i, 'hash': item_hash}
 							activity_data = preset_data
 
 				if len(activity_data) > 0:
