@@ -300,7 +300,6 @@ while True:
 
 		ts = int(time.time())
 
-		logging.info(f'+[{ts}] iter activities: {len(procs)}')
 		for i, process_name in enumerate(client.detections):
 			if process_name in procs:
 				client.is_idle = False
@@ -312,7 +311,6 @@ while True:
 
 				match process_name:
 					case 'pycharm64.exe':
-						logging.info(f'+[{ts}] case: pycharm64.exe')
 						filename = getWindowSizes('pycharm64.exe')
 						if len(filename) == 0: continue
 						filename = filename[0]['text']
@@ -326,7 +324,6 @@ while True:
 								activity_data = replace_values(preset_data, [('{filename}', project_name)])
 
 					case 'sublime_text.exe':
-						logging.info(f'+[{ts}] case: sublime_text.exe')
 						filename = [process_name for process_name in getWindowSizes() if '- Sublime Text' in process_name['text']]
 						if len(filename) == 0: continue
 						filename = filename[0]['text']
@@ -338,7 +335,6 @@ while True:
 								activity_data = replace_values(preset_data, [('{filename}', filename.split('\\')[-1].split(' ')[0])])
 
 					case 'robloxstudiobeta.exe':
-						logging.info(f'+[{ts}] case: robloxstudiobeta.exe')
 						filename = [process_name for process_name in getWindowSizes() if '- Roblox Studio' in process_name['text']]
 						if len(filename) == 0: continue
 						filename = filename[0]['text']
@@ -350,7 +346,6 @@ while True:
 								activity_data = replace_values(preset_data, [('{filename}', filename.split('-')[0].strip())])
 
 					case 'spotify.exe':
-						logging.info(f'+[{ts}] case: spotify.exe')
 						track_data = spf_client.current_track()
 						if track_data['skip']: continue
 						track_id = track_data['track_id']
@@ -366,7 +361,6 @@ while True:
 						activity_data = replace_values(preset_data, [('{track_artist}', track_artist), ('{track_name}', track_name), ('{track_url}', track_url), ('{album_picture}', album_picture)])
 
 					case 'chrome.exe':
-						logging.info(f'+[{ts}] case: chrome.exe')
 						tab_name = [process_name for process_name in getWindowSizes() if '- Google Chrome' in process_name['text'] and 'ornhub' not in process_name['text'] and 'орнхаб' not in process_name['text'].lower()]
 						if len(tab_name) == 0: continue
 						tab_name = tab_name[0]['text'][:-16][0:128]
@@ -376,7 +370,6 @@ while True:
 							activity_data = replace_values(preset_data, [('{tab_name}', tab_name)])
 
 					case _:
-						logging.info(f'+[{ts}] case: {process_name}')
 						item_hash = hashlib.sha256(json.dumps(preset_data, sort_keys=True).encode()).hexdigest()
 						if client.check_data.get('index') != i or client.check_data.get('hash') != item_hash:
 							client.check_data = {'index': i, 'hash': item_hash}
@@ -385,8 +378,6 @@ while True:
 				if len(activity_data) > 0:
 					client.pid = procs[process_name]
 					logging.info(f'New activity: {process_name}')
-				else:
-					logging.info(f'+[{ts}] empty activity_data: {process_name}')
 				break
 
 		if client.is_idle:
