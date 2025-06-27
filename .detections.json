@@ -85,7 +85,7 @@
     "bonelab_steam_windows64.exe":{
         "state":"Garry's Mod VR",
         "start": "current_timestamp",
-        "large_image":"https://staticdelivery.nexusmods.com/Images/games/4_3/tile_4832.jpg",
+        "large_image":"https://onlyvr.ru/wp-content/uploads/2024/07/bonelab-logo.webp",
         "large_text":"BONELAB"
     },
 
@@ -111,7 +111,7 @@
     },
 
     "deadbydaylight-win64-shipping.exe":{
-        "state":"Ада Бонг P63/P100",
+        "state":"Ада Бонг P70/P100",
         "start": "current_timestamp",
         "large_image":"https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmFmNWUycW1pcW5zMW81OHQ3MXFoYnlqcHh5ZWVsa2FzMjJlODA2aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gYlqe7GpEQ2yIKEjgw/giphy.gif",
         "large_text":"Dead By Daylight"
