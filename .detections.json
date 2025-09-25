@@ -15,6 +15,41 @@
         "small_text":"текст для ссылки"
     },
 
+    "shadowwarrior2.exe":{
+        "details": "Как стать ниндзя",
+        "start": "current_timestamp",
+        "large_image": "https://gamepropaganda.com/wp-content/uploads/2024/04/1VnvumP5Te6IqXzM5u654oifP2GMRvMB.jpg",
+        "large_text": "Shadow Warrior 2"
+    },
+
+    "bf2042.exe":{
+        "details": "BF 2042",
+        "start": "current_timestamp",
+        "large_image": "https://upload.wikimedia.org/wikipedia/ru/7/79/%D0%9E%D0%B1%D0%BB%D0%BE%D0%B6%D0%BA%D0%B0_Battlefield_2042.jpg",
+        "large_text": "Battlefield 2042"
+    },
+
+    "forzahorizon5.exe":{
+        "details": "Залетаю бочком в отбойник",
+        "start": "current_timestamp",
+        "large_image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhdMyGPxjKXzHYa8xlYCDnl93scqdR8u081Q&s",
+        "large_text": "Forza Horizon 5"
+    },
+
+    "elitedangerous64.exe":{
+        "details": "Евро трак симулятор в космосе",
+        "start": "current_timestamp",
+        "large_image": "https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/359320/capsule_616x353.jpg",
+        "large_text": "Elite Dangerous"
+    },
+
+    "ds.exe":{
+        "details": "курьер яндекс еда",
+        "start": "current_timestamp",
+        "large_image": "https://static.gabestore.ru/product/370x460_b7m32dE1_js8XvHUQ_84m68qlR_hHfYD.jpg",
+        "large_text": "Death Stranding"
+    },
+
     "valorant.exe":{
         "details": "валорантик",
         "start": "current_timestamp",
@@ -111,14 +146,7 @@
     },
 
     "deadbydaylight-win64-shipping.exe":{
-        "state":"Ада Бонг P70/P100",
-        "start": "current_timestamp",
-        "large_image":"https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmFmNWUycW1pcW5zMW81OHQ3MXFoYnlqcHh5ZWVsa2FzMjJlODA2aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gYlqe7GpEQ2yIKEjgw/giphy.gif",
-        "large_text":"Dead By Daylight"
-    },
-
-    "sam.game.exe":{
-        "state":"жеска ебут в попу",
+        "state":"Ада Бонг P93/P100",
         "start": "current_timestamp",
         "large_image":"https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmFmNWUycW1pcW5zMW81OHQ3MXFoYnlqcHh5ZWVsa2FzMjJlODA2aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gYlqe7GpEQ2yIKEjgw/giphy.gif",
         "large_text":"Dead By Daylight"
@@ -147,8 +175,21 @@
                 "url":"https://www.escapefromtarkov.com/preorder-page"
             }
         ],
-        "large_image":"https://cdn.discordapp.com/app-icons/1191411733592551444/a39a2bfe0fb42f24983942eef18ef92f.png?size=256",
+        "large_image":"https://media.tenor.com/R4yvi6fvac4AAAAi/bear-escape-from-tarkov.gif",
         "large_text":"Игра года"
+    },
+    
+    "escapefromtarkovarena.exe":{
+        "details":"Добываю балумбакоины",
+        "start":"current_timestamp",
+        "buttons":[
+            {
+                "label":"Купить",
+                "url":"https://www.escapefromtarkov.com/preorder-page"
+            }
+        ],
+        "large_image":"https://media.tenor.com/R4yvi6fvac4AAAAi/bear-escape-from-tarkov.gif",
+        "large_text":"Игра года 2"
     },
     
     "uagame.exe":{
@@ -176,6 +217,13 @@
         "start":"current_timestamp",
         "large_image":"https://i.pinimg.com/736x/00/fd/8a/00fd8af896bab591d677f03939f07e7c.jpg",
         "large_text":"Дом пидронов"
+    },
+    
+    "dyinglightgame_thebeast_x64_rwdi.exe":{
+        "details":"Выживаю среди зомбаков",
+        "start":"current_timestamp",
+        "large_image":"https://media1.tenor.com/m/wGDI3KVLbN0AAAAC/kyle-crane-dying-light.gif",
+        "large_text":"Dying Light: The Beast"
     },
     
     "dyinglightgame_x64_rwdi.exe":{
@@ -239,12 +287,13 @@
 
     "discord.exe":{
         "state":"хочу аду бонг",
-        "large_image": "https://s14.gifyu.com/images/bxiou.gif",
+        "large_image": "https://i.pinimg.com/736x/0a/86/7e/0a867e8b9d7d3151dbbd4838979b3a65.jpg",
         "large_text": "полуафк"
     },
     
     "idle":{
         "state":"Отдыхаю",
+        "large_image": "https://i.pinimg.com/736x/0a/86/7e/0a867e8b9d7d3151dbbd4838979b3a65.jpg",
         "buttons":[
             {
                 "label":"Telegram",
