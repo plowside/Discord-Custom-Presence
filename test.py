@@ -33,7 +33,7 @@ class spotify_client: # spf_client
 
 			logging.info('[spf_client] Creating session')
 			try: cookies = {cookie.name: cookie.value for cookie in browser_cookie3.chrome(domain_name="spotify.com")}
-			except: cookies = {cookie.get('name', None): cookie.get('value', None)  for cookie in json.loads(open(spotify_cookies, 'r').read())}
+			except: cookies = {cookie.get('name', None): cookie.get('value', None) for cookie in json.loads(open(spotify_cookies, 'r').read())}
 
 			req = self.session.get(f'https://accounts.spotify.com/authorize?client_id={self.spotify_client_id}&response_type=code&redirect_uri={self.spotify_client_redirect_uri}&scope=user-read-playback-state', cookies=cookies, headers={'authority': 'accounts.spotify.com','accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7','accept-language': 'ru,en-US;q=0.9,en;q=0.8,ru-RU;q=0.7','sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"','sec-ch-ua-mobile': '?0','sec-ch-ua-platform': '"Windows"','sec-fetch-dest': 'document','sec-fetch-mode': 'navigate','sec-fetch-site': 'none','sec-fetch-user': '?1','upgrade-insecure-requests': '1','user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'})
 			if 'smallImageUrl":"' in req.text:
@@ -104,7 +104,9 @@ class spotify_client: # spf_client
 					track_name = track_id.split(' - ')[1]
 					track_url = spotify_profile_url
 					album_picture = None
-		except: skip = True
+		except Exception as error:
+			logging.info(f'spf_client.current_track skip cuz except: {error}')
+			skip = True
 
 		return {'skip': skip, 'track_id': track_id, 'track_name': track_name, 'track_artist': track_artist, 'track_url': track_url, 'album_picture': album_picture if album_picture else 'https://raw.githubusercontent.com/plowside/plowside/main/assets/shpotify.png'}
 
