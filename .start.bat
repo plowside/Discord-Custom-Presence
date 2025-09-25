@@ -41,7 +41,7 @@ if exist requirements.txt (
 )
 
 :: Run the script to create a scheduled task
-venv\Scripts\python.exe create_sheduled_task.py
+venv\Scripts\python.exe installer.py
 
 endlocal
 pause

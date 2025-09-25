@@ -12,7 +12,7 @@ discord_bot_id = 1356296211908264129 # https://discord.com/developers/applicatio
 4. Pick an ‘App name’ and ‘App description’ of your choice and mark the checkboxes.
 5. After creation, you see your ‘Client Id’ and you can click on ‘Show client secret` to unhide your ’Client secret’.
 '''
-spotify_cookies = 'spotify_cookies.txt' # File path to spotify cookies
+spotify_cookies = '.spotify_cookies.txt' # File path to spotify cookies
 spotify_client_id = '7dd90ccb229d42cab7c3f584d55f7413' # Spotify Client ID
 spotify_client_secret = '53d843d96b3b4539aacdd907e0c46c19' # Spotify Client Secret
 spotify_client_redirect_uri = 'https://t.me/LUCKYBANANA5894' # Spotify Redirect Uri
