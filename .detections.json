@@ -15,6 +15,19 @@
         "small_text":"текст для ссылки"
     },
 
+    "deltaforceclient-win64-shipping.exe":{
+        "details":"Убийца таркова",
+        "start":"current_timestamp",
+        "buttons":[
+            {
+                "label":"Купить",
+                "url":"https://www.escapefromtarkov.com/preorder-page"
+            }
+        ],
+        "large_image":"https://assets-prd.ignimgs.com/2024/08/28/delta-force-button-replacement-1724855313566.jpg?crop=1%3A1%2Csmart&format=jpg&auto=webp&quality=70",
+        "large_text":"Убийца таркова"
+    },
+
     "shadowwarrior2.exe":{
         "details": "Как стать ниндзя",
         "start": "current_timestamp",
@@ -146,7 +159,7 @@
     },
 
     "deadbydaylight-win64-shipping.exe":{
-        "state":"Ада Бонг P93/P100",
+        "state":"Ада Бонг P100/P100",
         "start": "current_timestamp",
         "large_image":"https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExcmFmNWUycW1pcW5zMW81OHQ3MXFoYnlqcHh5ZWVsa2FzMjJlODA2aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/gYlqe7GpEQ2yIKEjgw/giphy.gif",
         "large_text":"Dead By Daylight"
