@@ -1,10 +1,18 @@
+import webbrowser
+import aiofiles
+import aiohttp
 import browser_cookie3, win32process, pypresence, threading, traceback, win32gui, win32con, requests, asyncio, spotipy, logging, hashlib, psutil, httpx, json, base64, time, sys, os, re
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import parse_qsl, urlparse, urlencode
+
+from adodbapi.ado_consts import adModeShareDenyWrite
 from spotipy.oauth2 import SpotifyOAuth
 from cachetools import TTLCache
 
 from config import *
 
+import uvicorn
+from fastapi import FastAPI
+import threading
 
 #####################################################################
 open('log.log', 'w', encoding='utf-8')
@@ -18,6 +26,46 @@ logging.getLogger('urllib3').setLevel(logging.INFO)
 def crash_handler(exctype, value, traceback_):
 	logging.error(''.join(traceback.format_exception(exctype, value, traceback_)))
 sys.excepthook = crash_handler
+
+#####################################################################
+app = FastAPI()
+
+@app.get("/callback")
+async def callback(code: str):
+	token = await generate_token(code)
+	if not token:
+		return {"message": "Server error"}
+	async with aiofiles.open('.cache', mode="w") as f:
+		await f.write(json.dumps(token))
+	return token
+
+@app.get("/get_auth_url")
+async def get_auth_url():
+	scopes = ['user-read-recently-played']
+	params = {
+		"redirect_uri": SPOTIFY_CLIENT_REDIRECT_URI,
+		"response_type": "code",
+		"scope": " ".join(scopes),
+		"show_dialog": "true",
+		"client_id": SPOTIFY_CLIENT_ID,
+	}
+	return {"url": "https://accounts.spotify.com/ru/authorize?" + urlencode(params)}
+
+async def generate_token(code: str):
+	async with aiohttp.ClientSession() as session:
+		resp = await session.post('https://accounts.spotify.com/api/token', headers={"Authorization": f"Basic {base64.b64encode(f'{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}'.encode('ascii')).decode('ascii')}"}, data={'redirect_uri': SPOTIFY_CLIENT_REDIRECT_URI, 'code': code, 'grant_type': 'authorization_code'})
+		if resp.status == 200:
+			token = await resp.json()
+			token["expires_at"] = int(time.time()) + token["expires_in"]
+			return token
+		try:
+			return (await resp.json()).get("error_description", "Server error")
+		except:
+			return "Server error"
+
+def run_server():
+	"""Функция для запуска сервера в отдельном потоке"""
+	uvicorn.run(app, host="127.0.0.1", port=9001, log_level="error")
 
 #####################################################################
 class custom_presence: # client
@@ -40,7 +88,7 @@ class custom_presence: # client
 			except pypresence.exceptions.PipeClosed: pass
 			except Exception as e: logging.error(f'[custom_presence] Error on closing RPC: {e}')
 			self.rpc_connected = False
-		
+
 		self.rpc = pypresence.Presence(bot_id)
 		logging.debug('[custom_presence] Connecting to RPC')
 		self.rpc_connect()
@@ -92,13 +140,13 @@ class custom_presence: # client
 		except Exception as error: logging.error(f'[custom_presence] Error on detections_watcher: {error}')
 
 class spotify_client: # spf_client
-	def __init__(self, spotify_client_id = None, spotify_client_secret = None, spotify_client_redirect_uri = None, proxies = list()):
+	def __init__(self, spotify_client_id = None, spotify_client_secret = None, spotify_client_redirect_uri = None, proxies = None):
 		self.spotify_client_id = spotify_client_id
 		self.spotify_client_secret = spotify_client_secret
 		self.spotify_client_redirect_uri = spotify_client_redirect_uri
 		self.authed = False
 		self.spy_client = None
-		self.proxies = proxies
+		self.proxies = proxies or []
 
 		self.session = requests.Session()
 		self.auth()
@@ -117,21 +165,17 @@ class spotify_client: # spf_client
 					return logging.info('[spf_client] Connected to session')
 
 			logging.info('[spf_client] Creating session')
-			try: cookies = {cookie.name: cookie.value for cookie in browser_cookie3.chrome(domain_name="spotify.com")}
-			except: cookies = {cookie.get('name', None): cookie.get('value', None) for cookie in json.loads(open(spotify_cookies, 'r').read())}
 
-			req = self.session.get(f'https://accounts.spotify.com/authorize?client_id={self.spotify_client_id}&response_type=code&redirect_uri={self.spotify_client_redirect_uri}&scope=user-read-playback-state', cookies=cookies, headers={'authority': 'accounts.spotify.com','accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7','accept-language': 'ru,en-US;q=0.9,en;q=0.8,ru-RU;q=0.7','sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"','sec-ch-ua-mobile': '?0','sec-ch-ua-platform': '"Windows"','sec-fetch-dest': 'document','sec-fetch-mode': 'navigate','sec-fetch-site': 'none','sec-fetch-user': '?1','upgrade-insecure-requests': '1','user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'})
-			if 'smallImageUrl":"' in req.text:
-				csrf = req.headers['set-cookie'].split('csrf_token=')[1].split(';')[0]
-				req = self.session.post(f'https://accounts.spotify.com/ru/authorize/accept?ajax_redirect=1', data={'request': '', 'client_id': self.spotify_client_id, 'response_type': 'code', 'redirect_uri': self.spotify_client_redirect_uri, 'scope': 'user-read-playback-state', 'csrf_token': csrf}, cookies=cookies, headers={'authority': 'accounts.spotify.com','accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7','accept-language': 'ru,en-US;q=0.9,en;q=0.8,ru-RU;q=0.7','sec-ch-ua': '"Not A(Brand";v="99", "Google Chrome";v="121", "Chromium";v="121"','sec-ch-ua-mobile': '?0','sec-ch-ua-platform': '"Windows"','sec-fetch-dest': 'document','sec-fetch-mode': 'navigate','sec-fetch-site': 'none','sec-fetch-user': '?1','upgrade-insecure-requests': '1','user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'})
-			url = req.url
+			auth_url = requests.get('http://127.0.0.1/get_authorize_url').json()['url']
+			webbrowser.open(auth_url, new=0, autoraise=True)
 
-			code = [dict(parse_qsl(urlparse(url).query)).get(param) for param in ["state", "code"]][1]
-			if not code: return logging.warning('[spf_client] Invalid credentials, using manually mode for Spotify')
+			i = 0
+			while not os.path.exists('.cache'):
+				if i > 30:
+					return False
+				time.sleep(1)
+				i+=1
 
-			token = self.session.post('https://accounts.spotify.com/api/token', headers={"Authorization": f"Basic {base64.b64encode(f'{self.spotify_client_id}:{self.spotify_client_secret}'.encode('ascii')).decode('ascii')}"}, data={'redirect_uri': self.spotify_client_redirect_uri,'code':code, 'grant_type': 'authorization_code'}).json()
-			token["expires_at"] = int(time.time()) + token["expires_in"]
-			open('.cache', 'w').write(json.dumps(token))
 			logging.info('[spf_client] Session created')
 
 			self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
@@ -174,7 +218,7 @@ class spotify_client: # spf_client
 			if self.authed and not force_manually:
 				try: current_track = self.spy_client.current_user_playing_track()['item']
 				except: return self.current_track(True)
-				
+
 				track_id = current_track['id']
 				track_name = current_track['name']
 				track_artist = current_track['album']['artists'][0]['name']
@@ -187,7 +231,7 @@ class spotify_client: # spf_client
 					track_id = proc_data[0]['text']
 					track_artist = track_id.split(' - ')[0]
 					track_name = track_id.split(' - ')[1]
-					track_url = spotify_profile_url
+					track_url = SPOTIFY_PROFILE_URL
 					album_picture = None
 		except Exception as error:
 			logging.info(f'spf_client.current_track skip cuz except: {error}')
@@ -266,7 +310,7 @@ def getWindowSizes(proc_name = None):
 def kwargs_to_dict(base_dict = None, **kwargs):
 	if not base_dict: base_dict = {}
 	base_dict.update(kwargs)
-	
+
 	return base_dict
 
 def replace_values(data, replacements):
@@ -283,9 +327,14 @@ def replace_values(data, replacements):
 
 #####################################################################
 client = custom_presence()
-spf_client = spotify_client(spotify_client_id, spotify_client_secret, spotify_client_redirect_uri, proxies)
+spf_client = spotify_client(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_CLIENT_REDIRECT_URI, proxies)
 
 client.create_rpc(discord_bot_id)
+
+server_thread = threading.Thread(target=run_server, daemon=True)
+server_thread.start()
+logging.info("FastAPI server started on http://127.0.0.1:9001")
+
 #####################################################################
 repeats = 11
 while True:
