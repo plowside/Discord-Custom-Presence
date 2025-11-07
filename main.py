@@ -254,11 +254,33 @@ class spotify_client: # spf_client
 
 			if time.time() > (expires_at - 300):
 				logging.info('Token expired or about to expire, refreshing...')
-				return await self.refresh_token(cache_data.get('refresh_token'))
+				success = await self.refresh_token(cache_data.get('refresh_token'))
+				if success:
+					await self.create_client_with_new_token()
+					return True
+				return False
 		except Exception as e:
 			logging.error(f'Error checking token expiration: {e}')
 
 		return False
+
+	async def create_client_with_new_token(self):
+		try:
+			with open('.cache', 'r') as f:
+				cache_data = json.loads(f.read())
+
+			access_token = cache_data.get('access_token')
+			if access_token:
+				self.spy_client = spotipy.Spotify(auth=access_token)
+				self.authed = True
+				logging.info('[spf_client] Recreated client with refreshed token')
+				return True
+			else:
+				logging.error('No access token found after refresh')
+				return False
+		except Exception as e:
+			logging.error(f'Error creating client with new token: {e}')
+			return False
 
 	async def refresh_token(self, refresh_token_value):
 		try:
@@ -273,6 +295,7 @@ class spotify_client: # spf_client
 						'refresh_token': refresh_token_value
 					}
 				)
+				logging.info(f'[spf_client] refresh token resp: {resp.status} | {await resp.text()}')
 
 				if resp.status == 200:
 					token_data = await resp.json()
@@ -283,21 +306,34 @@ class spotify_client: # spf_client
 					existing_data['access_token'] = token_data['access_token']
 					existing_data['expires_at'] = int(time.time()) + token_data['expires_in']
 
+					if 'refresh_token' in token_data:
+						existing_data['refresh_token'] = token_data['refresh_token']
+						logging.info('Refresh token was also updated')
+
 					async with aiofiles.open('.cache', mode="w") as f:
 						await f.write(json.dumps(existing_data))
 
 					logging.info('Token refreshed successfully')
 					return True
 				else:
-					logging.error(f'Failed to refresh token: {resp.status}')
+					error_text = await resp.text()
+					logging.error(f'Failed to refresh token: {resp.status} - {error_text}')
+
+					if resp.status == 400:
+						logging.error('Refresh token is invalid, requiring re-authentication')
+						if os.path.exists('.cache'):
+							os.remove('.cache')
+							self.authed = False
+
 					return False
 
 		except Exception as e:
 			logging.error(f'Error refreshing token: {e}')
 			return False
 
-	def current_track(self, force_manually = False):
-		asyncio.new_event_loop().run_until_complete(self.refresh_token_if_needed())
+	def current_track(self, force_manually=False):
+		loop = asyncio.new_event_loop()
+		token_refreshed = loop.run_until_complete(self.refresh_token_if_needed())
 
 		skip = False
 		track_id = None
@@ -309,20 +345,34 @@ class spotify_client: # spf_client
 		try:
 			if self.authed and not force_manually:
 				try:
-					if os.path.exists('.cache'):
-						with open('.cache','r') as f:
-							cache_data = json.loads(f.read())
-						self.spy_client = spotipy.Spotify(auth=cache_data.get('access_token'))
 					resp = self.spy_client.current_user_playing_track()
 					if resp and resp['item']:
 						current_track = resp['item']
 					else:
 						return {'skip': True}
 				except spotipy.SpotifyException as e:
-					if isinstance(e,spotipy.SpotifyException):
+					logging.warning(f'Spotify API error: {e}')
+					if e.http_status in [401, 403]:
+						logging.info('Token invalid, trying to refresh...')
+						success = loop.run_until_complete(self.refresh_token_if_needed())
+						if success:
+							try:
+								resp = self.spy_client.current_user_playing_track()
+								if resp and resp['item']:
+									current_track = resp['item']
+								else:
+									return {'skip': True}
+							except:
+								self.authed = False
+								return self.current_track(True)
+						else:
+							self.authed = False
+							return self.current_track(True)
+					else:
 						self.authed = False
-					return self.current_track(True)
+						return self.current_track(True)
 				except Exception as e:
+					logging.error(f'Unexpected error in current_track: {e}')
 					return self.current_track(True)
 
 				track_id = current_track['id']
@@ -332,9 +382,10 @@ class spotify_client: # spf_client
 				album_picture = current_track['album']['images'][0]['url']
 			else:
 				proc_data = getWindowSizes('spotify.exe')
-				if len(proc_data) == 0: skip = True
+				if len(proc_data) == 0:
+					skip = True
 				else:
-					track_id: str = proc_data[0]['text']
+					track_id = proc_data[0]['text']
 					if track_id.lower() in ['spotify free', 'spotify premium', 'spotify']:
 						skip = True
 					else:
@@ -346,7 +397,14 @@ class spotify_client: # spf_client
 			logging.info(f'spf_client.current_track(force_manually={force_manually}) skip cuz except: {error}')
 			skip = True
 
-		return {'skip': skip, 'track_id': track_id, 'track_name': track_name, 'track_artist': track_artist, 'track_url': track_url, 'album_picture': album_picture if album_picture else 'https://raw.githubusercontent.com/plowside/plowside/main/assets/shpotify.png'}
+		return {
+			'skip': skip,
+			'track_id': track_id,
+			'track_name': track_name,
+			'track_artist': track_artist,
+			'track_url': track_url,
+			'album_picture': album_picture if album_picture else 'https://raw.githubusercontent.com/plowside/plowside/main/assets/shpotify.png'
+		}
 
 	def change_proxy(self):
 		return
