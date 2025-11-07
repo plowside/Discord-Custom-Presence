@@ -242,7 +242,63 @@ class spotify_client: # spf_client
 			self.authed = False
 			logging.error(f'[spf_client] Error while creating session: {error} | {type(error)}')
 
+	async def refresh_token_if_needed(self):
+		if not os.path.exists('.cache'):
+			return False
+
+		try:
+			with open('.cache', 'r') as f:
+				cache_data = json.loads(f.read())
+
+			expires_at = cache_data.get('expires_at', 0)
+
+			if time.time() > (expires_at - 300):
+				logging.info('Token expired or about to expire, refreshing...')
+				return await self.refresh_token(cache_data.get('refresh_token'))
+		except Exception as e:
+			logging.error(f'Error checking token expiration: {e}')
+
+		return False
+
+	async def refresh_token(self, refresh_token_value):
+		try:
+			async with aiohttp.ClientSession() as session:
+				resp = await session.post(
+					'https://accounts.spotify.com/api/token',
+					headers={
+						"Authorization": f"Basic {base64.b64encode(f'{SPOTIFY_CLIENT_ID}:{SPOTIFY_CLIENT_SECRET}'.encode('ascii')).decode('ascii')}"
+					},
+					data={
+						'grant_type': 'refresh_token',
+						'refresh_token': refresh_token_value
+					}
+				)
+
+				if resp.status == 200:
+					token_data = await resp.json()
+
+					with open('.cache', 'r') as f:
+						existing_data = json.loads(f.read())
+
+					existing_data['access_token'] = token_data['access_token']
+					existing_data['expires_at'] = int(time.time()) + token_data['expires_in']
+
+					async with aiofiles.open('.cache', mode="w") as f:
+						await f.write(json.dumps(existing_data))
+
+					logging.info('Token refreshed successfully')
+					return True
+				else:
+					logging.error(f'Failed to refresh token: {resp.status}')
+					return False
+
+		except Exception as e:
+			logging.error(f'Error refreshing token: {e}')
+			return False
+
 	def current_track(self, force_manually = False):
+		asyncio.new_event_loop().run_until_complete(self.refresh_token_if_needed())
+
 		skip = False
 		track_id = None
 		track_name = None
@@ -253,8 +309,15 @@ class spotify_client: # spf_client
 		try:
 			if self.authed and not force_manually:
 				try:
+					if os.path.exists('.cache'):
+						with open('.cache','r') as f:
+							cache_data = json.loads(f.read())
+						self.spy_client = spotipy.Spotify(auth=cache_data.get('access_token'))
 					resp = self.spy_client.current_user_playing_track()
-					current_track = resp['item']
+					if resp and resp['item']:
+						current_track = resp['item']
+					else:
+						return {'skip': True}
 				except spotipy.SpotifyException as e:
 					if isinstance(e,spotipy.SpotifyException):
 						self.authed = False
