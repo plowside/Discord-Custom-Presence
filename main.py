@@ -17,7 +17,7 @@ import threading
 #####################################################################
 open('log.log', 'w', encoding='utf-8')
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s', level=logging.DEBUG, handlers=[logging.StreamHandler(), logging.FileHandler("log.log", mode='w', encoding='utf-8')])
-logging.getLogger('spotipy').setLevel(logging.INFO)
+logging.getLogger('spotipy').setLevel(logging.DEBUG)
 logging.getLogger('requests').setLevel(logging.INFO)
 logging.getLogger('httpx').setLevel(logging.ERROR)
 logging.getLogger('httpcore').setLevel(logging.ERROR)
@@ -35,13 +35,14 @@ async def callback(code: str):
 	token = await generate_token(code)
 	if not token:
 		return {"message": "Server error"}
+	logging.info('Saving token to .cache')
 	async with aiofiles.open('.cache', mode="w") as f:
 		await f.write(json.dumps(token))
 	return token
 
 @app.get("/get_auth_url")
 async def get_auth_url():
-	scopes = ['user-read-recently-played']
+	scopes = ['user-read-playback-state']
 	params = {
 		"redirect_uri": SPOTIFY_CLIENT_REDIRECT_URI,
 		"response_type": "code",
@@ -65,7 +66,7 @@ async def generate_token(code: str):
 
 def run_server():
 	"""Функция для запуска сервера в отдельном потоке"""
-	uvicorn.run(app, host="127.0.0.1", port=9001, log_level="error")
+	uvicorn.run(app, host="127.0.0.1", port=9001, log_level="info")
 
 #####################################################################
 class custom_presence: # client
@@ -145,32 +146,37 @@ class spotify_client: # spf_client
 		self.spotify_client_secret = spotify_client_secret
 		self.spotify_client_redirect_uri = spotify_client_redirect_uri
 		self.authed = False
-		self.spy_client = None
+		self.spy_client: spotipy.Spotify | None = None
 		self.proxies = proxies or []
 
 		self.session = requests.Session()
 		self.auth()
 
 	def auth(self):
+		logging.info('change_proxy 1')
 		self.change_proxy()
 		try:
 			if os.path.exists('.cache'):
 				bearer = json.loads(open('.cache','r').read()).get('access_token')
 				req = self.session.get('https://api.spotify.com/v1/me', headers={'Authorization': f'Bearer {bearer}'})
-
-				if req.status_code == 200:
+				logging.info(f'[v1/me] {req.status_code} | {req.text}')
+				if req.status_code == 200 or (req.status_code == 403 and 'Spotify is unavailable in this country' in req.text):
 					self.authed = True
 					self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
 
 					return logging.info('[spf_client] Connected to session')
+				try: os.remove('.cache')
+				except: pass
 
 			logging.info('[spf_client] Creating session')
 
-			auth_url = requests.get('http://127.0.0.1/get_authorize_url').json()['url']
+			auth_url = requests.get('http://127.0.0.1:9001/get_auth_url').json()['url']
+			logging.info(f'[spf_client] Opening in browser: {auth_url}')
 			webbrowser.open(auth_url, new=0, autoraise=True)
 
 			i = 0
 			while not os.path.exists('.cache'):
+				logging.info(f'[spf_client] {i}')
 				if i > 30:
 					return False
 				time.sleep(1)
@@ -183,19 +189,22 @@ class spotify_client: # spf_client
 			logging.info('[spf_client] Connected to session')
 		except requests.exceptions.ConnectionError:
 			logging.debug('[spf_client] Bad proxy, changing')
+			logging.info('change_proxy 2')
 			self.change_proxy()
 			self.auth()
 		except requests.exceptions.ConnectTimeout:
 			logging.debug('[spf_client] Bad proxy, changing')
+			logging.info('change_proxy 3')
 			self.change_proxy()
 			self.auth()
 		except requests.exceptions.ProxyError:
 			logging.debug('[spf_client] Bad proxy, changing')
+			logging.info('change_proxy 4')
 			self.change_proxy()
 			self.auth()
-		except KeyError:
-			self.authed = False
-			logging.warning('[spf_client] Invalid credentials, using manually mode for Spotify')
+		# except KeyError:
+		# 	self.authed = False
+		# 	logging.warning('[spf_client] Invalid credentials, using manually mode for Spotify')
 		except PermissionError:
 			self.authed = False
 			logging.warning('[spf_client] Error while getting cookies from browser, using manually mode for Spotify')
@@ -228,18 +237,22 @@ class spotify_client: # spf_client
 				proc_data = getWindowSizes('spotify.exe')
 				if len(proc_data) == 0: skip = True
 				else:
-					track_id = proc_data[0]['text']
-					track_artist = track_id.split(' - ')[0]
-					track_name = track_id.split(' - ')[1]
-					track_url = SPOTIFY_PROFILE_URL
-					album_picture = None
+					track_id: str = proc_data[0]['text']
+					if track_id.lower() in ['spotify free', 'spotify premium', 'spotify']:
+						skip = True
+					else:
+						track_artist = track_id.split(' - ')[0]
+						track_name = track_id.split(' - ')[1]
+						track_url = SPOTIFY_PROFILE_URL
+						album_picture = None
 		except Exception as error:
-			logging.info(f'spf_client.current_track skip cuz except: {error}')
+			logging.info(f'spf_client.current_track(force_manually={force_manually}) skip cuz except: {error}')
 			skip = True
 
 		return {'skip': skip, 'track_id': track_id, 'track_name': track_name, 'track_artist': track_artist, 'track_url': track_url, 'album_picture': album_picture if album_picture else 'https://raw.githubusercontent.com/plowside/plowside/main/assets/shpotify.png'}
 
 	def change_proxy(self):
+		return
 		logging.debug('[spf_client] Changing proxy')
 		if len(self.proxies) == 0:
 			if proxy_auto_scrape:
@@ -326,15 +339,14 @@ def replace_values(data, replacements):
 	return data
 
 #####################################################################
-client = custom_presence()
-spf_client = spotify_client(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_CLIENT_REDIRECT_URI, proxies)
-
-client.create_rpc(discord_bot_id)
-
 server_thread = threading.Thread(target=run_server, daemon=True)
 server_thread.start()
 logging.info("FastAPI server started on http://127.0.0.1:9001")
 
+client = custom_presence()
+spf_client = spotify_client(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_CLIENT_REDIRECT_URI, proxies)
+
+client.create_rpc(discord_bot_id)
 #####################################################################
 repeats = 11
 while True:
