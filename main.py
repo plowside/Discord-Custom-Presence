@@ -42,7 +42,6 @@ async def callback(code: str):
 
 	global spf_client
 	if spf_client:
-		logging.info('Calling spf_client.auth() after token save')
 		try:
 			threading.Thread(target=spf_client.auth, daemon=True).start()
 		except Exception as e:

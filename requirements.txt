@@ -6,3 +6,7 @@ pywin32
 spotipy
 psutil
 httpx
+aiofiles
+aiohttp
+uvicorn
+fastapi
