@@ -1,6 +1,7 @@
 ############################## SCRIPT SETTINGS ###########################
 proxy_auto_scrape = False # Automatic proxy scraping from third-party resources [BETA]
 proxies = [] # HTTP Proxy in one of the specified formats: [ip:port:login:password, login:password@ip:port] or None
+debug = False # For requests debugging
 
 discord_bot_id = 1356296211908264129 # https://discord.com/developers/applications ==> Create application ==> General Information ==> APPLICATION ID
 

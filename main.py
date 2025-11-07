@@ -4,7 +4,6 @@ import aiohttp
 import browser_cookie3, win32process, pypresence, threading, traceback, win32gui, win32con, requests, asyncio, spotipy, logging, hashlib, psutil, httpx, json, base64, time, sys, os, re
 from urllib.parse import parse_qsl, urlparse, urlencode
 
-from adodbapi.ado_consts import adModeShareDenyWrite
 from spotipy.oauth2 import SpotifyOAuth
 from cachetools import TTLCache
 
@@ -17,8 +16,8 @@ import threading
 #####################################################################
 open('log.log', 'w', encoding='utf-8')
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s', level=logging.DEBUG, handlers=[logging.StreamHandler(), logging.FileHandler("log.log", mode='w', encoding='utf-8')])
-logging.getLogger('spotipy').setLevel(logging.DEBUG)
-logging.getLogger('requests').setLevel(logging.INFO)
+logging.getLogger('spotipy').setLevel(logging.DEBUG if debug else logging.INFO)
+logging.getLogger('requests').setLevel(logging.DEBUG if debug else logging.INFO)
 logging.getLogger('httpx').setLevel(logging.ERROR)
 logging.getLogger('httpcore').setLevel(logging.ERROR)
 logging.getLogger('urllib3').setLevel(logging.INFO)
@@ -77,7 +76,7 @@ async def generate_token(code: str):
 
 def run_server():
 	"""Функция для запуска сервера в отдельном потоке"""
-	uvicorn.run(app, host="127.0.0.1", port=9001, log_level="info")
+	uvicorn.run(app, host="127.0.0.1", port=9001, log_level="info", log_config=None, access_log=False, reload=False)
 
 #####################################################################
 class custom_presence: # client
@@ -184,10 +183,11 @@ class spotify_client: # spf_client
 							return
 				except Exception as e:
 					logging.warning(f'Error reading cache: {e}')
-					try:
-						os.remove('.cache')
-						logging.info('Removed invalid .cache file')
-					except: pass
+
+				try:
+					os.remove('.cache')
+					logging.info('Removed invalid .cache file')
+				except: pass
 
 			logging.info('[spf_client] Creating new session')
 
@@ -201,8 +201,9 @@ class spotify_client: # spf_client
 					i = 0
 					while not os.path.exists('.cache'):
 						logging.info(f'[spf_client] Waiting for authentication... {i}')
-						if i > 60:  # Увеличил время ожидания до 60 секунд
+						if i > 60:
 							logging.error('[spf_client] Authentication timeout')
+							self.authed = False
 							return False
 						time.sleep(1)
 						i += 1
@@ -253,8 +254,13 @@ class spotify_client: # spf_client
 		try:
 			if self.authed and not force_manually:
 				try:
-					current_track = self.spy_client.current_user_playing_track()['item']
-				except:
+					resp = self.spy_client.current_user_playing_track()
+					current_track = resp['item']
+				except spotipy.SpotifyException as e:
+					if isinstance(e,spotipy.SpotifyException):
+						self.authed = False
+					return self.current_track(True)
+				except Exception as e:
 					return self.current_track(True)
 
 				track_id = current_track['id']
