@@ -28,6 +28,8 @@ def crash_handler(exctype, value, traceback_):
 sys.excepthook = crash_handler
 
 #####################################################################
+spf_client = None
+
 app = FastAPI()
 
 @app.get("/callback")
@@ -38,6 +40,15 @@ async def callback(code: str):
 	logging.info('Saving token to .cache')
 	async with aiofiles.open('.cache', mode="w") as f:
 		await f.write(json.dumps(token))
+
+	global spf_client
+	if spf_client:
+		logging.info('Calling spf_client.auth() after token save')
+		try:
+			threading.Thread(target=spf_client.auth, daemon=True).start()
+		except Exception as e:
+			logging.error(f'Error calling spf_client.auth(): {e}')
+
 	return token
 
 @app.get("/get_auth_url")
@@ -153,58 +164,74 @@ class spotify_client: # spf_client
 		self.auth()
 
 	def auth(self):
-		logging.info('change_proxy 1')
+		logging.info('Starting Spotify authentication')
 		self.change_proxy()
 		try:
 			if os.path.exists('.cache'):
-				bearer = json.loads(open('.cache','r').read()).get('access_token')
-				req = self.session.get('https://api.spotify.com/v1/me', headers={'Authorization': f'Bearer {bearer}'})
-				logging.info(f'[v1/me] {req.status_code} | {req.text}')
-				if req.status_code == 200 or (req.status_code == 403 and 'Spotify is unavailable in this country' in req.text):
-					self.authed = True
-					self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
+				try:
+					with open('.cache','r') as f:
+						cache_data = json.loads(f.read())
+					bearer = cache_data.get('access_token')
 
-					return logging.info('[spf_client] Connected to session')
-				try: os.remove('.cache')
-				except: pass
+					if bearer:
+						req = self.session.get('https://api.spotify.com/v1/me', headers={'Authorization': f'Bearer {bearer}'})
+						logging.info(f'[v1/me] {req.status_code} | {req.text}')
 
-			logging.info('[spf_client] Creating session')
+						if req.status_code == 200 or (req.status_code == 403 and 'Spotify is unavailable in this country' in req.text):
+							self.authed = True
+							self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
+							logging.info('[spf_client] Connected to existing session')
+							return
+				except Exception as e:
+					logging.warning(f'Error reading cache: {e}')
+					try:
+						os.remove('.cache')
+						logging.info('Removed invalid .cache file')
+					except: pass
 
-			auth_url = requests.get('http://127.0.0.1:9001/get_auth_url').json()['url']
-			logging.info(f'[spf_client] Opening in browser: {auth_url}')
-			webbrowser.open(auth_url, new=0, autoraise=True)
+			logging.info('[spf_client] Creating new session')
 
-			i = 0
-			while not os.path.exists('.cache'):
-				logging.info(f'[spf_client] {i}')
-				if i > 30:
-					return False
-				time.sleep(1)
-				i+=1
+			try:
+				auth_url_response = requests.get('http://127.0.0.1:9001/get_auth_url', timeout=5)
+				if auth_url_response.status_code == 200:
+					auth_url = auth_url_response.json()['url']
+					logging.info(f'[spf_client] Opening in browser: {auth_url}')
+					webbrowser.open(auth_url, new=0, autoraise=True)
 
-			logging.info('[spf_client] Session created')
+					i = 0
+					while not os.path.exists('.cache'):
+						logging.info(f'[spf_client] Waiting for authentication... {i}')
+						if i > 60:  # Увеличил время ожидания до 60 секунд
+							logging.error('[spf_client] Authentication timeout')
+							return False
+						time.sleep(1)
+						i += 1
 
-			self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
-			self.authed = True
-			logging.info('[spf_client] Connected to session')
+					logging.info('[spf_client] Authentication successful, token received')
+
+					if os.path.exists('.cache'):
+						with open('.cache','r') as f:
+							cache_data = json.loads(f.read())
+						if cache_data.get('access_token'):
+							self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
+							self.authed = True
+							logging.info('[spf_client] Connected to new session')
+				else:
+					logging.error(f'[spf_client] Failed to get auth URL: {auth_url_response.status_code}')
+			except requests.exceptions.ConnectionError:
+				logging.error('[spf_client] Authentication server not available')
+			except Exception as e:
+				logging.error(f'[spf_client] Error during authentication: {e}')
+
 		except requests.exceptions.ConnectionError:
 			logging.debug('[spf_client] Bad proxy, changing')
-			logging.info('change_proxy 2')
 			self.change_proxy()
-			self.auth()
 		except requests.exceptions.ConnectTimeout:
 			logging.debug('[spf_client] Bad proxy, changing')
-			logging.info('change_proxy 3')
 			self.change_proxy()
-			self.auth()
 		except requests.exceptions.ProxyError:
 			logging.debug('[spf_client] Bad proxy, changing')
-			logging.info('change_proxy 4')
 			self.change_proxy()
-			self.auth()
-		# except KeyError:
-		# 	self.authed = False
-		# 	logging.warning('[spf_client] Invalid credentials, using manually mode for Spotify')
 		except PermissionError:
 			self.authed = False
 			logging.warning('[spf_client] Error while getting cookies from browser, using manually mode for Spotify')
@@ -225,8 +252,10 @@ class spotify_client: # spf_client
 
 		try:
 			if self.authed and not force_manually:
-				try: current_track = self.spy_client.current_user_playing_track()['item']
-				except: return self.current_track(True)
+				try:
+					current_track = self.spy_client.current_user_playing_track()['item']
+				except:
+					return self.current_track(True)
 
 				track_id = current_track['id']
 				track_name = current_track['name']
@@ -344,6 +373,7 @@ server_thread.start()
 logging.info("FastAPI server started on http://127.0.0.1:9001")
 
 client = custom_presence()
+
 spf_client = spotify_client(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_CLIENT_REDIRECT_URI, proxies)
 
 client.create_rpc(discord_bot_id)
