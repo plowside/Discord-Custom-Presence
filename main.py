@@ -1,9 +1,11 @@
+import yandex_music
 import webbrowser
 import aiofiles
 import aiohttp
 import browser_cookie3, win32process, pypresence, threading, traceback, win32gui, win32con, requests, asyncio, spotipy, logging, hashlib, psutil, httpx, json, base64, time, sys, os, re
-from urllib.parse import parse_qsl, urlparse, urlencode
 
+from urllib.parse import parse_qsl, urlparse, urlencode
+from winsdk.windows.media.control import GlobalSystemMediaTransportControlsSessionManager as MediaManager
 from spotipy.oauth2 import SpotifyOAuth
 from cachetools import TTLCache
 
@@ -16,10 +18,12 @@ import threading
 #####################################################################
 open('log.log', 'w', encoding='utf-8')
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s', level=logging.DEBUG, handlers=[logging.StreamHandler(), logging.FileHandler("log.log", mode='w', encoding='utf-8')])
-logging.getLogger('spotipy').setLevel(logging.DEBUG if debug else logging.INFO)
+logging.getLogger('yandex_music').setLevel(logging.DEBUG if debug else logging.INFO)
 logging.getLogger('requests').setLevel(logging.DEBUG if debug else logging.INFO)
+logging.getLogger('spotipy').setLevel(logging.DEBUG if debug else logging.INFO)
 logging.getLogger('httpx').setLevel(logging.ERROR)
 logging.getLogger('httpcore').setLevel(logging.ERROR)
+logging.getLogger('asyncio').setLevel(logging.INFO)
 logging.getLogger('urllib3').setLevel(logging.INFO)
 
 def crash_handler(exctype, value, traceback_):
@@ -408,18 +412,86 @@ class spotify_client: # spf_client
 
 	def change_proxy(self):
 		return
-		logging.debug('[spf_client] Changing proxy')
-		if len(self.proxies) == 0:
-			if proxy_auto_scrape:
-				logging.info('[spf_client] No proxies, getting new')
-				self.proxies = asyncio.new_event_loop().run_until_complete(proxy_scraper().get_proxy())
-			else:
-				logging.info('[spf_client] No proxies')
-				return
 
-		proxy = self.proxies.pop(0)
-		_proxy = proxy if ('@' in proxy or len(proxy.split(':')) == 2) else f"{proxy.split(':')[2]}:{proxy.split(':')[3]}@{proxy.split(':')[0]}:{proxy.split(':')[1]}"
-		self.session.proxies = {'http':f'http://{_proxy}','https':f'http://{_proxy}'}
+
+class yandex_music_client:
+	def __init__(self):
+		self.client = yandex_music.Client()
+		self.cache = {}
+
+	def find_track(self, track_name):
+		if track_name in self.cache:
+			return self.cache[track_name]
+		try:
+			search_result = self.client.search(track_name, type_='track')
+			if search_result.tracks:
+				track = search_result.tracks.results[0]
+				album = track.albums[0] if track.albums else None
+				cover_url = None
+				if album:
+					cover_uri = album.cover_uri
+					if cover_uri:
+						cover_url = f"https://{cover_uri.replace('%%', '400x400')}"
+				result = {
+					"id": track.id,
+					"url": f"https://music.yandex.ru/track/{track.id}",
+					"title": track.title,
+					"artists": ", ".join(artist.name for artist in track.artists),
+					"cover_url": cover_url
+				}
+				self.cache[track_name] = result
+				return result
+		except Exception as e:
+			print(f"Error: {e}")
+		return None
+
+
+
+class windows_music_client: # wms_client
+	def __init__(self):
+		...
+
+	async def get_media_info_with_thumbnail(self):
+		sessions = await MediaManager.request_async()
+		current_session = sessions.get_current_session()
+
+		if current_session:
+			info = await current_session.try_get_media_properties_async()
+			info_dict = {song_attr: info.__getattribute__(song_attr) for song_attr in dir(info) if song_attr[0] != '_'}
+			info_dict['genres'] = list(info_dict['genres'])
+			return info_dict
+		else:
+			return None
+
+	def current_track(self, force_manually=False):
+		skip = False
+		track_id = None
+		track_name = None
+		track_artist = None
+		track_url = None
+		album_picture = None
+
+		try:
+			loop = asyncio.new_event_loop()
+			current_track = loop.run_until_complete(self.get_media_info_with_thumbnail())
+			if current_track:
+				track_id = hashlib.md5(f"{current_track['artist']} {current_track['title']}".encode()).hexdigest()
+				track_artist = current_track['artist']
+				track_name = current_track['title']
+				track_url = None
+				album_picture = None
+		except Exception as error:
+			logging.info(f'spf_client.current_track(force_manually={force_manually}) skip cuz except: {error}')
+			skip = True
+
+		return {
+			'skip': skip,
+			'track_id': track_id,
+			'track_name': track_name,
+			'track_artist': track_artist,
+			'track_url': track_url,
+			'album_picture': album_picture if album_picture else 'https://raw.githubusercontent.com/plowside/plowside/main/assets/shpotify.png'
+		}
 
 class proxy_scraper:
 	def __init__(self):
@@ -501,6 +573,8 @@ logging.info("FastAPI server started on http://127.0.0.1:9001")
 client = custom_presence()
 
 spf_client = spotify_client(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_CLIENT_REDIRECT_URI, proxies)
+wms_client = windows_music_client()
+yam_client = yandex_music_client()
 
 client.create_rpc(discord_bot_id)
 #####################################################################
@@ -561,6 +635,26 @@ while True:
 
 							if len(filename) > 0:
 								activity_data = replace_values(preset_data, [('{filename}', filename.split('-')[0].strip())])
+
+					case 'яндекс музыка.exe':
+						track_data = wms_client.current_track()
+						if track_data['skip']: continue
+						track_id = track_data['track_id']
+						track_artist = track_data['track_artist']
+						track_name = track_data['track_name']
+						track_ym_data = yam_client.find_track(f"{track_name} {track_artist}")
+						if track_ym_data:
+							album_picture = track_ym_data['cover_url']
+							track_url = track_ym_data['url']
+						else:
+							album_picture = "https://music.yandex.ru/meta/og-image.png"
+							track_url = "https://music.yandex.ru/search"
+
+						if track_id == client.check_data.get('track_id'):
+							break
+
+						client.check_data = {'track_id': track_id}
+						activity_data = replace_values(preset_data, [('{track_artist}', track_artist), ('{track_name}', track_name), ('{track_url}', track_url), ('{album_picture}', album_picture)])
 
 					case 'spotify.exe':
 						track_data = spf_client.current_track()

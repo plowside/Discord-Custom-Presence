@@ -1,3 +1,4 @@
+yandex-music
 browser-cookie3
 cachetools
 pypresence
@@ -10,3 +11,4 @@ aiofiles
 aiohttp
 uvicorn
 fastapi
+winsdk

@@ -14,23 +14,6 @@
         "small_image":"ссылка",
         "small_text":"текст для ссылки"
     },
-    
-    "spotify.exe":{
-        "state":"{track_name}",
-        "details":"{track_artist}",
-        "buttons":[
-            {
-                "label":"Послушать",
-                "url":"{track_url}"
-            },
-            {
-                "label":"Telegram",
-                "url":"https://t.me/LUCKYBANANA5894"
-            }
-        ],
-        "large_image":"{album_picture}",
-        "large_text":"Shpotify"
-    },
 
     "deltaforceclient-win64-shipping.exe":{
         "details":"Убийца таркова",
@@ -289,6 +272,40 @@
         "start":"current_timestamp",
         "large_image":"https://cdn-1.webcatalog.io/catalog/roblox-studio/roblox-studio-icon-filled-256.png",
         "large_text":"Roblox Studio"
+    },
+    
+    "яндекс музыка.exe":{
+        "state":"{track_name}",
+        "details":"{track_artist}",
+        "buttons":[
+            {
+                "label":"Послушать",
+                "url":"{track_url}"
+            },
+            {
+                "label":"Telegram",
+                "url":"https://t.me/LUCKYBANANA5894"
+            }
+        ],
+        "large_image":"{album_picture}",
+        "large_text":"Spotimusic"
+    },
+    
+    "spotify.exe":{
+        "state":"{track_name}",
+        "details":"{track_artist}",
+        "buttons":[
+            {
+                "label":"Послушать",
+                "url":"{track_url}"
+            },
+            {
+                "label":"Telegram",
+                "url":"https://t.me/LUCKYBANANA5894"
+            }
+        ],
+        "large_image":"{album_picture}",
+        "large_text":"Shpotify"
     },
     
     "chrome.exe":{
