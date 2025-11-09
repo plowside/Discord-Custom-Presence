@@ -171,6 +171,9 @@ class spotify_client: # spf_client
 		try:
 			if os.path.exists('.cache'):
 				try:
+					loop = asyncio.new_event_loop()
+					token_refreshed = loop.run_until_complete(self.refresh_token_if_needed())
+
 					with open('.cache','r') as f:
 						cache_data = json.loads(f.read())
 					bearer = cache_data.get('access_token')
