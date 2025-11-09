@@ -78,7 +78,6 @@ async def generate_token(code: str):
 			return "Server error"
 
 def run_server():
-	"""Функция для запуска сервера в отдельном потоке"""
 	uvicorn.run(app, host="127.0.0.1", port=9001, log_level="info", log_config=None, access_log=False, reload=False)
 
 #####################################################################
@@ -124,11 +123,15 @@ class custom_presence: # client
 
 	def update_rpc(self, is_idle = False, **kwargs):
 		self.is_idle = is_idle
-
+		if kwargs.get('details', None) == '':
+				kwargs['details'] = " "
+		if kwargs.get('state', None) == '':
+			kwargs['state'] = " "
+		logging.debug('[custom_presence] Updating RPC: {}'.format(kwargs))
 		try: self.rpc.update(**kwargs)
 		except pypresence.exceptions.DiscordNotFound: self.await_discord()
 		except pypresence.exceptions.PipeClosed: self.create_rpc(discord_bot_id)
-		except Exception as error: return logging.error(f'[custom_presence] Error on updating RPC: {error}')
+		except Exception as error: return logging.error(f'[custom_presence] Error on updating RPC: {error} | {dict(**kwargs)}')
 		finally: self.rpc.update(**kwargs)
 
 	def get_start(self, proc):
@@ -565,7 +568,7 @@ def replace_values(data, replacements):
 			data[i] = replace_values(item, replacements)
 	elif isinstance(data, str):
 		for pattern, replacement in replacements:
-			data = data.replace(pattern, replacement)
+			data = data.replace(pattern, replacement if replacement is not None else " ")
 	return data
 
 #####################################################################
@@ -588,7 +591,9 @@ while True:
 			client.detections_checker()
 			repeats = 0
 		temp_procs = psutil.process_iter()
-		procs = {x.name().lower(): x.pid for x in temp_procs}
+		procs = {}
+		for x in temp_procs:
+			procs[x.name().lower()] = x.pid
 		activity_data = {}
 		client.is_idle = True
 
@@ -643,8 +648,9 @@ while True:
 						track_data = wms_client.current_track()
 						if track_data['skip']: continue
 						track_id = track_data['track_id']
-						track_artist = track_data['track_artist']
-						track_name = track_data['track_name']
+						track_artist = track_data['track_artist'] or 'Unknown Artist'
+						track_name = track_data['track_name'] or 'Unknown Track'
+
 						track_ym_data = yam_client.find_track(f"{track_name} {track_artist}")
 						if track_ym_data:
 							album_picture = track_ym_data['cover_url']
