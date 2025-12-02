@@ -190,6 +190,10 @@ class spotify_client: # spf_client
 							self.spy_client = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=self.spotify_client_id, client_secret=self.spotify_client_secret, redirect_uri=self.spotify_client_redirect_uri, scope='user-read-playback-state'))
 							logging.info('[spf_client] Connected to existing session')
 							return
+				except (requests.exceptions.ConnectionError, requests.exceptions.Timeout, requests.exceptions.HTTPError, requests.exceptions.SSLError) as e:
+					logging.warning(f'Error on /v1/me request: {e}')
+					time.sleep(5)
+					return self.auth()
 				except Exception as e:
 					logging.warning(f'Error reading cache: {e}')
 
@@ -336,7 +340,10 @@ class spotify_client: # spf_client
 							self.authed = False
 
 					return False
-
+		except (aiohttp.ClientConnectorError, aiohttp.ServerTimeoutError) as e:
+			logging.warning(f'Error on /api/token request: {e}')
+			await asyncio.sleep(5)
+			return await self.refresh_token(refresh_token_value)
 		except Exception as e:
 			logging.error(f'Error refreshing token: {e}')
 			return False
@@ -600,10 +607,12 @@ while True:
 		ts = int(time.time())
 
 		for i, process_name in enumerate(client.detections):
+			original_process_name = process_name
+			process_name = process_name.lower()
 			if process_name in procs:
 				client.is_idle = False
 
-				preset_data = client.detections[process_name].copy()
+				preset_data = client.detections[original_process_name].copy()
 
 				if preset_data.get('start') == 'current_timestamp':
 					preset_data['start'] = client.get_start(process_name)

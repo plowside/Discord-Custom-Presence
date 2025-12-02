@@ -35,6 +35,13 @@
         "large_text": "Shadow Warrior 2"
     },
 
+    "r5apex_dx12.exe":{
+        "details": "Apex 2",
+        "start": "current_timestamp",
+        "large_image": "https://images.seeklogo.com/logo-png/38/1/apex-logo-png_seeklogo-383506.png",
+        "large_text": "Apex"
+    },
+
     "bf2042.exe":{
         "details": "BF 2042",
         "start": "current_timestamp",
@@ -288,7 +295,7 @@
             }
         ],
         "large_image":"{album_picture}",
-        "large_text":"Spotimusic"
+        "large_text":"Shpotimusic"
     },
     
     "spotify.exe":{
