@@ -28,6 +28,13 @@
         "large_text":"Убийца таркова"
     },
 
+    "valheim.exe":{
+        "details":"Valheim",
+        "start":"current_timestamp",
+        "large_image":"https://cdn2.steamgriddb.com/icon/a0b83c02d720415dada82e08bc09e9f3/32/256x256.png",
+        "large_text":"Valheim"
+    },
+
     "shadowwarrior2.exe":{
         "details": "Как стать ниндзя",
         "start": "current_timestamp",
@@ -254,7 +261,8 @@
     },
     
     "pycharm64.exe":{
-        "state":"Работаю над {filename}",
+        "details":"{project_name}/",
+        "state":"/{filename}",
         "start":"current_timestamp",
         "large_image":"https://raw.githubusercontent.com/plowside/plowside/refs/heads/main/assets/PyCharm_Icon.png",
         "large_text":"PyCharm"

@@ -15,6 +15,11 @@ import uvicorn
 from fastapi import FastAPI
 import threading
 
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from pathlib import Path
+import platform
+
 #####################################################################
 open('log.log', 'w', encoding='utf-8')
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s', level=logging.DEBUG, handlers=[logging.StreamHandler(), logging.FileHandler("log.log", mode='w', encoding='utf-8')])
@@ -542,6 +547,110 @@ class proxy_scraper:
 		except: pass
 
 
+class pycharm_client:
+	def __init__(self):
+		self.system = platform.system()
+		self.all_entries = []
+		self.last_opened_project = None
+
+	def get_pycharm_info(self):
+		if self.system == "Windows":
+			config_path = Path(os.environ.get('APPDATA', '')) / "JetBrains"
+		elif self.system == "Darwin":
+			config_path = Path.home() / "Library" / "Application Support" / "JetBrains"
+		else:
+			config_path = Path.home() / ".config" / "JetBrains"
+
+		recent_projects = []
+		for pycharm_dir in config_path.glob("PyCharm*"):
+			options_dir = pycharm_dir / "options"
+			if options_dir.exists():
+				recent_projects_file = options_dir / "recentProjects.xml"
+				if recent_projects_file.exists():
+					recent_projects.append(str(recent_projects_file))
+
+		workspace_info = {}
+		for path in config_path.rglob("*.xml"):
+			if "workspace" in path.name.lower():
+				workspace_info[path.name] = str(path)
+
+		return {
+			"config_path": str(config_path),
+			"recent_projects_files": recent_projects,
+			"workspace_files": workspace_info
+		}
+
+	def parse_recent_projects_xml(self, xml_content):
+		root = ET.fromstring(xml_content)
+		map_element = root.find(".//map")
+		if map_element is None:
+			return None
+
+		self.last_opened_project = root.find(".//option[@name='lastOpenedProject']")
+		if self.last_opened_project is not None:
+			self.last_opened_project = self.last_opened_project.get('value')
+
+		entries = []
+		for entry in map_element.findall("entry"):
+			key = entry.get("key")
+			meta_info = entry.find(".//RecentProjectMetaInfo")
+			if meta_info is not None:
+				timestamp_elem = meta_info.find("option[@name='activationTimestamp']")
+				if timestamp_elem is not None:
+					timestamp = int(timestamp_elem.get("value"))
+					frame_title = meta_info.get("frameTitle", "No frameTitle")
+					opened = meta_info.get("opened", "false") == "true"
+					entries.append({
+						"key": key,
+						"timestamp": timestamp,
+						"frameTitle": frame_title,
+						"opened": opened,
+						"datetime": datetime.fromtimestamp(timestamp / 1000)
+					})
+
+		if not entries:
+			return None
+
+		entries.sort(key=lambda x: x["timestamp"], reverse=True)
+		return entries
+
+	def parse_from_file(self, xml_file_path):
+		try:
+			with open(xml_file_path, 'r', encoding='utf-8') as file:
+				xml_content = file.read()
+			return self.parse_recent_projects_xml(xml_content)
+		except:
+			return None
+
+	def get_all_entries(self):
+		pycharm_info = self.get_pycharm_info()
+		self.all_entries = []
+
+		if pycharm_info["recent_projects_files"]:
+			for xml_file in pycharm_info["recent_projects_files"]:
+				entries = self.parse_from_file(xml_file)
+				if entries:
+					self.all_entries.extend(entries)
+
+		if self.all_entries:
+			self.all_entries.sort(key=lambda x: x["timestamp"], reverse=True)
+
+		return self.all_entries
+
+	def get_latest_entry(self):
+		if not self.all_entries:
+			self.get_all_entries()
+
+		if self.all_entries:
+			return self.all_entries[0]
+		return None
+
+
+
+def get_parent_dir(path):
+	p = Path(os.path.expandvars(path))
+	return p.parent.name if p.suffix else p.name
+
 def isRealWindow(hWnd):
 	if not win32gui.IsWindowVisible(hWnd) or win32gui.GetParent(hWnd) != 0: return False
 	if (((win32gui.GetWindowLong(hWnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_TOOLWINDOW) == 0 and win32gui.GetWindow(hWnd, win32con.GW_OWNER) == 0) or ((win32gui.GetWindowLong(hWnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_APPWINDOW != 0) and not win32gui.GetWindow(hWnd, win32con.GW_OWNER) == 0)):
@@ -588,6 +697,7 @@ client = custom_presence()
 spf_client = spotify_client(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_CLIENT_REDIRECT_URI, proxies)
 wms_client = windows_music_client()
 yam_client = yandex_music_client()
+pyc_client = pycharm_client()
 
 client.create_rpc(discord_bot_id)
 #####################################################################
@@ -626,10 +736,12 @@ while True:
 						if not (client.pid == procs[process_name] and client.check_data.get('filename') == filename):
 							client.check_data = {'filename': filename}
 
+							last_projects = pyc_client.get_all_entries()
 							if len(filename) > 0:
 								project_name = filename.split(' – ')[0]
-								working_filename = filename.split(' – ')[-1]
-								activity_data = replace_values(preset_data, [('{filename}', project_name)])
+								working_filename = Path(filename.split(' – ')[-1]).name
+								working_directory = get_parent_dir(pyc_client.last_opened_project)
+								activity_data = replace_values(preset_data, [('{project_name}', working_directory if '.' in project_name else project_name), ('{filename}', working_filename)])
 
 					case 'sublime_text.exe':
 						filename = [process_name for process_name in getWindowSizes() if '- Sublime Text' in process_name['text']]
