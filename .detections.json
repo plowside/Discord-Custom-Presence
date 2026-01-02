@@ -35,6 +35,13 @@
         "large_text":"Valheim"
     },
 
+    "pioneergame.exe":{
+        "details":"ARC Raiders",
+        "start":"current_timestamp",
+        "large_image":"https://image.api.playstation.com/vulcan/ap/rnd/202504/1515/99f254edff001a6a52d1d9f09af28959abfbaf1fe1a034b4.jpg",
+        "large_text":"ARC Raiders"
+    },
+
     "shadowwarrior2.exe":{
         "details": "Как стать ниндзя",
         "start": "current_timestamp",
