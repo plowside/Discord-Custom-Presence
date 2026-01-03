@@ -472,6 +472,7 @@ class windows_music_client: # wms_client
 	async def get_media_info_with_thumbnail(self):
 		async def get_sessions_task():
 			try:
+				#logging.info('system_req|MediaManager.request_async()')
 				return await MediaManager.request_async()
 			except Exception as e:
 				logging.error(f"Ошибка в get_sessions_task: {e}")
@@ -656,21 +657,31 @@ class pycharm_client:
 			return self.all_entries[0]
 		return None
 
-
+window_cache = TTLCache(maxsize=1000, ttl=60)
 
 def get_parent_dir(path):
 	p = Path(os.path.expandvars(path))
 	return p.parent.name if p.suffix else p.name
 
 def isRealWindow(hWnd):
+	#logging.info('system_req|isRealWindow()')
 	if not win32gui.IsWindowVisible(hWnd) or win32gui.GetParent(hWnd) != 0: return False
 	if (((win32gui.GetWindowLong(hWnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_TOOLWINDOW) == 0 and win32gui.GetWindow(hWnd, win32con.GW_OWNER) == 0) or ((win32gui.GetWindowLong(hWnd, win32con.GWL_EXSTYLE) & win32con.WS_EX_APPWINDOW != 0) and not win32gui.GetWindow(hWnd, win32con.GW_OWNER) == 0)):
 		if win32gui.GetWindowText(hWnd): return True
 	else: return False
 
+def isRealWindow_cached(hWnd):
+	if hWnd in window_cache:
+		return window_cache[hWnd]
+	result = isRealWindow(hWnd)
+	window_cache[hWnd] = result
+	return result
+
+
 def getWindowSizes(proc_name = None):
 	def callback(hWnd, windows):
-		if not isRealWindow(hWnd): return
+		if not isRealWindow_cached(hWnd): return
+		#logging.info('system_req|psutil.Process()')
 		name = psutil.Process(win32process.GetWindowThreadProcessId(hWnd)[1]).name().lower()
 		if proc_name and name != proc_name: return
 
@@ -718,6 +729,7 @@ while True:
 		if repeats > 5:
 			client.detections_checker()
 			repeats = 0
+		#logging.info('system_req|psutil.process_iter()')
 		temp_procs = psutil.process_iter()
 		procs = {}
 		for x in temp_procs:
