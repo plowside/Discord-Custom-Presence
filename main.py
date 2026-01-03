@@ -470,7 +470,16 @@ class windows_music_client: # wms_client
 		...
 
 	async def get_media_info_with_thumbnail(self):
-		sessions = await MediaManager.request_async()
+		async def get_sessions_task():
+			try:
+				return await MediaManager.request_async()
+			except Exception as e:
+				logging.error(f"Ошибка в get_sessions_task: {e}")
+				raise
+		try:
+			sessions = await asyncio.wait_for(get_sessions_task(), timeout=3)
+		except asyncio.TimeoutError:
+			return None
 		current_session = sessions.get_current_session()
 
 		if current_session:
@@ -498,6 +507,8 @@ class windows_music_client: # wms_client
 				track_name = current_track['title']
 				track_url = None
 				album_picture = None
+			else:
+				skip = True
 		except Exception as error:
 			logging.info(f'spf_client.current_track(force_manually={force_manually}) skip cuz except: {error}')
 			skip = True
@@ -767,6 +778,7 @@ while True:
 
 					case 'яндекс музыка.exe':
 						track_data = wms_client.current_track()
+						logging.info(('track_data', track_data))
 						if track_data['skip']: continue
 						track_id = track_data['track_id']
 						track_artist = track_data['track_artist'] or 'Unknown Artist'
@@ -788,6 +800,7 @@ while True:
 
 					case 'spotify.exe':
 						track_data = spf_client.current_track()
+						logging.info(('track_data', track_data))
 						if track_data['skip']: continue
 						track_id = track_data['track_id']
 						track_artist = track_data['track_artist']
