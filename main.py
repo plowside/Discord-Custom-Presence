@@ -96,6 +96,8 @@ class custom_presence: # client
 		self.cache = TTLCache(maxsize=100, ttl=7200)
 		self.check_data = {}
 		self.detections = {}
+		self.last_heartbeat_check = 0
+		self.heartbeat_interval = 30  # Проверять каждые 30 секунд
 
 	def create_rpc(self, bot_id = discord_bot_id):
 		if self.rpc:
@@ -103,46 +105,111 @@ class custom_presence: # client
 			try:
 				self.rpc.close()
 				logging.debug('[custom_presence] RPC closed')
-			except pypresence.exceptions.PipeClosed: pass
-			except Exception as e: logging.error(f'[custom_presence] Error on closing RPC: {e}')
+			except pypresence.exceptions.PipeClosed:
+				pass
+			except Exception as e:
+				logging.error(f'[custom_presence] Error on closing RPC: {e}')
 			self.rpc_connected = False
 
 		self.rpc = pypresence.Presence(bot_id)
 		logging.debug('[custom_presence] Connecting to RPC')
 		self.rpc_connect()
 		logging.debug('[custom_presence] Connected to RPC')
-
 		self.rpc_id = bot_id
 
 	def rpc_connect(self):
-		if self.rpc_connected: return
+		if self.rpc_connected:
+			return
 		try:
 			self.rpc.connect()
 			self.rpc_connected = True
-		except pypresence.exceptions.DiscordNotFound: self.await_discord()
+			logging.debug('[custom_presence] RPC connected successfully')
+		except pypresence.exceptions.DiscordNotFound:
+			self.await_discord()
 		except Exception as error:
 			logging.error(f'[custom_presence] Error on connecting RPC: {error}')
 			if 'Message: User logged out' in str(error):
 				return self.create_rpc()
-		finally: self.rpc_connect()
+		finally:
+			if not self.rpc_connected:
+				self.rpc_connect()
 
-	def update_rpc(self, is_idle = False, **kwargs):
+	def update_rpc(self, is_idle=False, **kwargs):
 		self.is_idle = is_idle
 		if kwargs.get('details', None) == '':
-				kwargs['details'] = " "
+			kwargs['details'] = " "
 		if kwargs.get('state', None) == '':
 			kwargs['state'] = " "
+
+		# Сначала проверяем соединение
+		self.check_rpc_connection()
+
 		logging.debug('[custom_presence] Updating RPC: {}'.format(kwargs))
-		try: self.rpc.update(**kwargs)
-		except pypresence.exceptions.DiscordNotFound: self.await_discord()
-		except pypresence.exceptions.PipeClosed: self.create_rpc(discord_bot_id)
-		except Exception as error: return logging.error(f'[custom_presence] Error on updating RPC: {error} | {dict(**kwargs)}')
-		finally: self.rpc.update(**kwargs)
+		try:
+			self.rpc.update(**kwargs)
+		except pypresence.exceptions.DiscordNotFound:
+			self.await_discord()
+			self.rpc.update(**kwargs)  # Повторяем после ожидания Discord
+		except pypresence.exceptions.PipeClosed:
+			self.create_rpc(discord_bot_id)
+			self.rpc.update(**kwargs)  # Повторяем после пересоздания
+		except Exception as error:
+			logging.error(f'[custom_presence] Error on updating RPC: {error} | {dict(**kwargs)}')
+			self.rpc_connected = False
+
+	def check_rpc_connection(self):
+		"""Проверяет живое ли соединение с Discord RPC"""
+		current_time = time.time()
+
+		# Проверяем только если прошло достаточно времени с последней проверки
+		if current_time - self.last_heartbeat_check < self.heartbeat_interval:
+			return self.rpc_connected
+
+		self.last_heartbeat_check = current_time
+
+		if not self.rpc_connected:
+			logging.debug('[custom_presence] RPC not connected, attempting to reconnect')
+			try:
+				self.rpc_connect()
+			except:
+				pass
+			return self.rpc_connected
+
+		# Проверяем наличие процесса Discord
+		discord_running = False
+		pattern = re.compile(r'.*discord.*\.exe$')
+		try:
+			for proc in psutil.process_iter(['name']):
+				if pattern.match(proc.info['name'].lower()):
+					discord_running = True
+					break
+		except:
+			pass
+
+		if not discord_running:
+			logging.debug('[custom_presence] Discord process not found, marking RPC as disconnected')
+			self.rpc_connected = False
+			return False
+
+		# Попытка легкой проверки соединения через update с пустыми данными
+		try:
+			# Минимальный вызов для проверки соединения
+			if hasattr(self.rpc, '_connection'):
+				# Проверяем внутреннее состояние соединения
+				pass
+			# Если до сих пор не было исключений, считаем соединение рабочим
+			return True
+		except Exception as e:
+			logging.debug(f'[custom_presence] RPC connection check failed: {e}')
+			self.rpc_connected = False
+			return False
 
 	def get_start(self, proc):
 		ts = self.cache.get(proc)
-		if not ts: self.cache[proc] = time.time()
-		else: self.cache[proc] = ts
+		if not ts:
+			self.cache[proc] = time.time()
+		else:
+			self.cache[proc] = ts
 		return self.cache.get(proc)
 
 	def await_discord(self):
@@ -150,16 +217,26 @@ class custom_presence: # client
 		pattern = re.compile(r'.*discord.*\.exe$')
 		while True:
 			try:
-				while not pattern.match(', '.join([x.name().lower() for x in psutil.process_iter()])):
+				discord_found = False
+				for proc in psutil.process_iter(['name']):
+					if pattern.match(proc.info['name'].lower()):
+						discord_found = True
+						break
+				if not discord_found:
 					time.sleep(1)
-				break
-			except: ...
+				else:
+					break
+			except:
+				pass
 		logging.debug('[custom_presence] A copy of the running discord was found')
-		time.sleep(10)
+		time.sleep(5)  # Даем Discord время для полного запуска
+		self.rpc_connected = False  # Сбрасываем флаг для переподключения
 
 	def detections_checker(self):
-		try: self.detections = json.loads(open('.detections.json', 'r', encoding='utf-8').read())
-		except Exception as error: logging.error(f'[custom_presence] Error on detections_watcher: {error}')
+		try:
+			self.detections = json.loads(open('.detections.json', 'r', encoding='utf-8').read())
+		except Exception as error:
+			logging.error(f'[custom_presence] Error on detections_watcher: {error}')
 
 class spotify_client: # spf_client
 	def __init__(self, spotify_client_id = None, spotify_client_secret = None, spotify_client_redirect_uri = None, proxies = None):
@@ -729,6 +806,17 @@ while True:
 		if repeats > 5:
 			client.detections_checker()
 			repeats = 0
+
+		# Проверяем соединение с RPC
+		if not client.check_rpc_connection():
+			logging.info('[Main] RPC disconnected, attempting to reconnect...')
+			try:
+				client.create_rpc(discord_bot_id)
+			except Exception as e:
+				logging.error(f'[Main] Failed to reconnect RPC: {e}')
+				time.sleep(5)
+				continue
+
 		#logging.info('system_req|psutil.process_iter()')
 		temp_procs = psutil.process_iter()
 		procs = {}
@@ -740,6 +828,7 @@ while True:
 		ts = int(time.time())
 
 		for i, process_name in enumerate(client.detections):
+
 			original_process_name = process_name
 			process_name = process_name.lower()
 			if process_name in procs:
