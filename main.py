@@ -96,6 +96,7 @@ class custom_presence: # client
 		self.cache = TTLCache(maxsize=100, ttl=7200)
 		self.check_data = {}
 		self.detections = {}
+		self.last_update = 0
 
 	def create_rpc(self, bot_id = discord_bot_id):
 		if self.rpc:
@@ -137,11 +138,18 @@ class custom_presence: # client
 		if kwargs.get('state', None) == '':
 			kwargs['state'] = " "
 		logging.debug('[custom_presence] Updating RPC: {}'.format(kwargs))
-		try: self.rpc.update(**kwargs)
-		except pypresence.exceptions.DiscordNotFound: self.await_discord()
-		except pypresence.exceptions.PipeClosed: self.create_rpc(discord_bot_id)
-		except Exception as error: return logging.error(f'[custom_presence] Error on updating RPC: {error} | {dict(**kwargs)}')
-		finally: self.rpc.update(**kwargs)
+		try:
+			self.rpc.update(**kwargs)
+		except pypresence.exceptions.DiscordNotFound:
+			self.await_discord()
+			self.rpc.update(**kwargs)
+		except pypresence.exceptions.PipeClosed:
+			self.create_rpc(discord_bot_id)
+			self.rpc.update(**kwargs)
+		except Exception as error:
+			logging.error(f'[custom_presence] Error on updating RPC: {error} | {dict(**kwargs)}')
+		finally:
+			self.last_update = time.time()
 
 	def get_start(self, proc):
 		ts = self.cache.get(proc)
@@ -742,7 +750,8 @@ while True:
 		client.is_idle = True
 
 		ts = int(time.time())
-
+		if ts - client.last_update > 300:
+			client.check_data = {}
 		for i, process_name in enumerate(client.detections):
 			original_process_name = process_name
 			process_name = process_name.lower()
