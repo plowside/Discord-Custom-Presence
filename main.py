@@ -103,33 +103,37 @@ class custom_presence: # client
 			try:
 				self.rpc.close()
 				logging.debug('[custom_presence] RPC closed')
-			except pypresence.exceptions.PipeClosed: pass
-			except Exception as e: logging.error(f'[custom_presence] Error on closing RPC: {e}')
+			except pypresence.exceptions.PipeClosed:
+				pass
+			except Exception as e:
+				logging.error(f'[custom_presence] Error on closing RPC: {e}')
 			self.rpc_connected = False
 
 		self.rpc = pypresence.Presence(bot_id)
 		logging.debug('[custom_presence] Connecting to RPC')
 		self.rpc_connect()
 		logging.debug('[custom_presence] Connected to RPC')
-
 		self.rpc_id = bot_id
 
 	def rpc_connect(self):
-		if self.rpc_connected: return
+		if self.rpc_connected:
+			return
 		try:
 			self.rpc.connect()
 			self.rpc_connected = True
-		except pypresence.exceptions.DiscordNotFound: self.await_discord()
+			logging.debug('[custom_presence] RPC connected successfully')
+		except pypresence.exceptions.DiscordNotFound:
+			self.await_discord()
 		except Exception as error:
 			logging.error(f'[custom_presence] Error on connecting RPC: {error}')
 			if 'Message: User logged out' in str(error):
 				return self.create_rpc()
 		finally: self.rpc_connect()
 
-	def update_rpc(self, is_idle = False, **kwargs):
+	def update_rpc(self, is_idle=False, **kwargs):
 		self.is_idle = is_idle
 		if kwargs.get('details', None) == '':
-				kwargs['details'] = " "
+			kwargs['details'] = " "
 		if kwargs.get('state', None) == '':
 			kwargs['state'] = " "
 		logging.debug('[custom_presence] Updating RPC: {}'.format(kwargs))
