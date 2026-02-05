@@ -15,6 +15,20 @@
         "small_text":"текст для ссылки"
     },
 
+    "ZenlessZoneZero.exe":{
+        "details":"Гунер гейм",
+        "start":"current_timestamp",
+        "large_image":"https://upload.wikimedia.org/wikipedia/en/thumb/d/d2/Zenless_Zone_Zero_curved_box_logo.svg/250px-Zenless_Zone_Zero_curved_box_logo.svg.png",
+        "large_text":"Zenless Zone Zero"
+    },
+
+    "endfield.exe":{
+        "details":"Гунер гейм",
+        "start":"current_timestamp",
+        "large_image":"https://i.rutab.net/upload/2026/01/arknightsendfield/60b789fd05e96128bb4471ff092a19e9.jpg",
+        "large_text":"Arknights: Endfield"
+    },
+
     "deltaforceclient-win64-shipping.exe":{
         "details":"Убийца таркова",
         "start":"current_timestamp",
