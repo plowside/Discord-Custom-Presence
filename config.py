@@ -13,6 +13,7 @@ discord_bot_id = 1356296211908264129 # https://discord.com/developers/applicatio
 4. In `Redirect URIs` enter `http://127.0.0.1:9001/callback` then fill `App name` and ‘App description’ of your choice and mark the checkboxes.
 5. After creation, you see your `Client Id` and you can click on `Show client secret` to unhide your `Client secret`.
 '''
+SPOTIFY_ENABLED = True # Enable spotify (True - enabled, False - disabled)
 SPOTIFY_CLIENT_ID = '880ea6a211c04b28abb979e9858a50f3' # Spotify Client ID
 SPOTIFY_CLIENT_SECRET = '82ade7eda89f4bdaa491329dfd87e35f' # Spotify Client Secret
 SPOTIFY_CLIENT_REDIRECT_URI = 'http://127.0.0.1:9001/callback' # Spotify Redirect Uri

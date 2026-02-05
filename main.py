@@ -183,7 +183,8 @@ class spotify_client: # spf_client
 		self.proxies = proxies or []
 
 		self.session = requests.Session()
-		self.auth()
+		if SPOTIFY_ENABLED:
+			self.auth()
 
 	def auth(self):
 		logging.info('Starting Spotify authentication')
