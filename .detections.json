@@ -15,11 +15,18 @@
         "small_text":"текст для ссылки"
     },
 
-    "ZenlessZoneZero.exe":{
+    "zenlesszonezero.exe":{
         "details":"Гунер гейм",
         "start":"current_timestamp",
         "large_image":"https://upload.wikimedia.org/wikipedia/en/thumb/d/d2/Zenless_Zone_Zero_curved_box_logo.svg/250px-Zenless_Zone_Zero_curved_box_logo.svg.png",
         "large_text":"Zenless Zone Zero"
+    },
+
+    "gta5.exe":{
+        "details":"гташечка",
+        "start":"current_timestamp",
+        "large_image":"https://media1.tenor.com/m/cSXiDiZYmdMAAAAC/kersty-gta.gif",
+        "large_text":"Grand Theft Auto V"
     },
 
     "endfield.exe":{
