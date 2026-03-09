@@ -22,6 +22,13 @@
         "large_text":"Zenless Zone Zero"
     },
 
+    "re9.exe":{
+        "details":"Резик без Адочки :(",
+        "start":"current_timestamp",
+        "large_image":"https://cdn1.epicgames.com/spt-assets/b2e589fac93746fc8d20b4177f5b3a60/resident-evil-requiem-g8jiq.jpg",
+        "large_text":"Resident Evil Requiem"
+    },
+
     "gta5.exe":{
         "details":"гташечка",
         "start":"current_timestamp",
